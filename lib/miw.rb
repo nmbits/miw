@@ -1,0 +1,76 @@
+require 'eventmachine'
+require 'cairo'
+require 'miw/theme/colors'
+
+module MiW; end
+
+require 'miw/xcb'
+MiW::PLATFORM = MiW::XCB
+
+require 'miw/window'
+
+module MiW
+  MOUSE_BUTTON_LEFT   = 1
+  MOUSE_BUTTON_CENTER = 2
+  MOUSE_BUTTON_RIGHT  = 3
+  MOUSE_WHEEL_UP      = 4
+  MOUSE_WHEEL_DOWN    = 5
+  MOUSE_STATE_SHIFT   = 1
+  MOUSE_STATE_CTRL    = 4
+
+  def self.run
+    if EM.reactor_running?
+      MiW::PLATFORM.setup_for_em
+    else
+      EM.run { MiW::PLATFORM.setup_for_em }
+    end
+  end
+
+  colors = Theme::Colors.new("default")
+  colors[:content_background]           = "#111"
+  colors[:content_background_highlight] = "#9ff"
+  colors[:content_background_active]    = "#4ff"
+  colors[:content_background_disabled]  = "#eee"
+
+  colors[:content_forground]           = "#bbb"
+  colors[:content_forground_highlight] = "#bbb"
+  colors[:content_forground_active]    = "#bbb"
+  colors[:content_forground_disabled]  = "#bbb"
+
+  colors[:control_background]           = "#333"
+  colors[:control_background_highlight] = "#777"
+  colors[:control_background_active]    = "#669"
+  colors[:control_background_disabled]  = "#555"
+
+  colors[:control_forground]           = "#000"
+  colors[:control_forground_highlight] = "#000"
+  colors[:control_forground_active]    = "#000"
+  colors[:control_forground_disabled]  = "#888"
+
+  colors[:control_border]           = "#000"
+  colors[:control_border_highlight] = "#ccc"
+  colors[:control_border_active]    = "#000"
+  colors[:control_border_disabled]  = "#000"
+
+  colors[:control_inner_background]           = "#111"
+  colors[:control_inner_background_highlight] = "#222"
+  colors[:control_inner_background_active]    = "#111"
+  colors[:control_inner_background_disabled]  = "#555"
+
+  colors[:control_inner_forground]           = "#000"
+  colors[:control_inner_forground_highlight] = "#000"
+  colors[:control_inner_forground_active]    = "#000"
+  colors[:control_inner_forground_disabled]  = "#888"
+
+  colors[:control_inner_border]           = "#000"
+  colors[:control_inner_border_highlight] = "#ccc"
+  colors[:control_inner_border_active]    = "#000"
+  colors[:control_inner_border_disabled]  = "#000"
+
+  DEFAULT_COLORS = colors
+
+  # pseudo
+  def self.colors
+    DEFAULT_COLORS
+  end
+end
