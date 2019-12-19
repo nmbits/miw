@@ -3,3 +3,6 @@
 Makefile
 mkmf.log
 *~
+.bundle/
+Gemfile.lock
+vendor/
