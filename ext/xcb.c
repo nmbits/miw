@@ -385,6 +385,29 @@ miw_xcb_win_minimize(VALUE self)
 static VALUE
 miw_xcb_win_title_set(VALUE self, VALUE title)
 {
+	miw_xcb_window_t *w = (miw_xcb_window_t *)DATA_PTR(self);
+	xcb_connection_t *c = miw_xcb_connection();
+	if (w->window) {
+		size_t len = RSTRING_LEN(title);
+		xcb_intern_atom_cookie_t cookie;
+		xcb_intern_atom_reply_t *reply;
+		xcb_atom_t net_wm_name;
+		xcb_atom_t utf8_string;
+		cookie = xcb_intern_atom(c, 1, strlen("_NET_WM_NAME"), "_NET_WM_NAME");
+		reply = xcb_intern_atom_reply(c, cookie, NULL);
+		if (!reply)
+			return Qnil;
+		net_wm_name = reply->atom;
+		cookie = xcb_intern_atom(c, 1, strlen("UTF8_STRING"), "UTF8_STRING");
+		reply = xcb_intern_atom_reply(c, cookie, NULL);
+		if (!reply)
+			return Qnil;
+		utf8_string = reply->atom;
+		xcb_change_property(c, XCB_PROP_MODE_REPLACE, w->window,
+							net_wm_name, utf8_string,
+							8, len, StringValuePtr(title));
+		xcb_flush(c);
+	}
 	return Qnil;
 }
 

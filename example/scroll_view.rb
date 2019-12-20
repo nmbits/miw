@@ -101,6 +101,7 @@ if __FILE__ == $0
   end
 
   w = MiW::Window.new("test", 10, 10, 400, 400, layout: MiW::Layout::HBox)
+  w.title = "scroll view - スクロールビュー"
   def w.quit_requested
     p :quit_requested
     EM.stop_event_loop
