@@ -51,9 +51,22 @@ ID id_exited;
 ID id_inside;
 ID id_outside;
 
+/* window type */
+ID id_type;
+ID id_normal;
+ID id_dialog;
+ID id_dropdown_menu;
+ID id_popup_menu;
+ID id_combo_box;
+ID id_utility;
+ID id_tooltip;
+
 xcb_atom_t g_atom_wm_protocols = XCB_ATOM_NONE;
 xcb_atom_t g_atom_wm_delete_window = XCB_ATOM_NONE;
 xcb_atom_t g_atom_wm_change_state = XCB_ATOM_NONE;
+xcb_atom_t g_atom_net_wm_window_type = XCB_ATOM_NONE;
+xcb_atom_t g_atom_net_wm_name = XCB_ATOM_NONE;
+xcb_atom_t g_atom_utf8_string = XCB_ATOM_NONE;
 
 struct xkb_context *g_xkb_context;
 uint32_t g_xkb_device_id;
@@ -389,22 +402,8 @@ miw_xcb_win_title_set(VALUE self, VALUE title)
 	xcb_connection_t *c = miw_xcb_connection();
 	if (w->window) {
 		size_t len = RSTRING_LEN(title);
-		xcb_intern_atom_cookie_t cookie;
-		xcb_intern_atom_reply_t *reply;
-		xcb_atom_t net_wm_name;
-		xcb_atom_t utf8_string;
-		cookie = xcb_intern_atom(c, 1, strlen("_NET_WM_NAME"), "_NET_WM_NAME");
-		reply = xcb_intern_atom_reply(c, cookie, NULL);
-		if (!reply)
-			return Qnil;
-		net_wm_name = reply->atom;
-		cookie = xcb_intern_atom(c, 1, strlen("UTF8_STRING"), "UTF8_STRING");
-		reply = xcb_intern_atom_reply(c, cookie, NULL);
-		if (!reply)
-			return Qnil;
-		utf8_string = reply->atom;
 		xcb_change_property(c, XCB_PROP_MODE_REPLACE, w->window,
-							net_wm_name, utf8_string,
+							g_atom_net_wm_name, g_atom_utf8_string,
 							8, len, StringValuePtr(title));
 		xcb_flush(c);
 	}
@@ -745,6 +744,9 @@ miw_xcb_s_setup(VALUE m_xcb)
 	g_atom_wm_protocols = miw_xcb_intern_atom(c, "WM_PROTOCOLS");
 	g_atom_wm_delete_window = miw_xcb_intern_atom(c, "WM_DELETE_WINDOW");
 	g_atom_wm_change_state = miw_xcb_intern_atom(c, "WM_CHANGE_STATE");
+	g_atom_net_wm_name = miw_xcb_intern_atom(c, "_NET_WM_NAME");
+	g_atom_net_wm_window_type = miw_xcb_intern_atom(c, "_NET_WM_WINDOW_TYPE");
+	g_atom_utf8_string = miw_xcb_intern_atom(c, "UTF8_STRING");
 	g_connection = c;
 	g_connected ++;
 
@@ -931,6 +933,15 @@ miw_xcb_init()
 	DEFINE_ID(exited);
 	DEFINE_ID(inside);
 	DEFINE_ID(outside);
+
+	DEFINE_ID(type);
+	DEFINE_ID(normal);
+	DEFINE_ID(dialog);
+	DEFINE_ID(dropdown_menu);
+	DEFINE_ID(popup_menu);
+	DEFINE_ID(combo_box);
+	DEFINE_ID(utility);
+	DEFINE_ID(tooltip);
 
 	g_st_window = st_init_numtable();
 }
