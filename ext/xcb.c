@@ -1,3 +1,4 @@
+#include <ctype.h>
 #include <ruby.h>
 #include <ruby/st.h>
 #include <xcb/xcb.h>
@@ -53,20 +54,36 @@ ID id_outside;
 
 /* window type */
 ID id_type;
-ID id_normal;
-ID id_dialog;
-ID id_dropdown_menu;
-ID id_popup_menu;
-ID id_combo_box;
-ID id_utility;
-ID id_tooltip;
 
-xcb_atom_t g_atom_wm_protocols = XCB_ATOM_NONE;
-xcb_atom_t g_atom_wm_delete_window = XCB_ATOM_NONE;
-xcb_atom_t g_atom_wm_change_state = XCB_ATOM_NONE;
-xcb_atom_t g_atom_net_wm_window_type = XCB_ATOM_NONE;
-xcb_atom_t g_atom_net_wm_name = XCB_ATOM_NONE;
-xcb_atom_t g_atom_utf8_string = XCB_ATOM_NONE;
+xcb_atom_t g_atom_wm_protocols;
+xcb_atom_t g_atom_wm_delete_window;
+xcb_atom_t g_atom_wm_change_state;
+xcb_atom_t g_atom_net_wm_window_type;
+xcb_atom_t g_atom_net_wm_name;
+xcb_atom_t g_atom_utf8_string;
+
+struct miw_window_type_map
+{
+	ID id;
+	xcb_atom_t atom;
+	const char *name;
+};
+
+struct miw_window_type_map g_window_type_map[] =
+	{
+	 {0, 0, "dock"},
+	 {0, 0, "toolbar"},
+	 {0, 0, "menu"},
+	 {0, 0, "utility"},
+	 {0, 0, "dialog"},
+	 {0, 0, "dropdown_menu"},
+	 {0, 0, "popup_menu"},
+	 {0, 0, "tooltip"},
+	 {0, 0, "notification"},
+	 {0, 0, "combo"},
+	 {0, 0, "dnd"},
+	 {0, 0, "normal"}
+	};
 
 struct xkb_context *g_xkb_context;
 uint32_t g_xkb_device_id;
@@ -307,18 +324,47 @@ miw_xcb_create_window(miw_xcb_window_t *w, xcb_connection_t *c,
 	w->sur_height = sur_height;
 }
 
+static xcb_atom_t
+find_window_type(VALUE sym)
+{
+	ID id = SYM2ID(sym);
+	for (int i = 0; i < sizeof(g_window_type_map) / sizeof(g_window_type_map[0]); i++) {
+		if (g_window_type_map[i].id == id)
+			return g_window_type_map[i].atom;
+	}
+	return XCB_ATOM_NONE;
+}
+
 static VALUE
 miw_xcb_win_initialize(VALUE self,
 					   VALUE x, VALUE y, VALUE width, VALUE height,
 					   VALUE opt)
 {
+	xcb_connection_t *c = miw_xcb_connection();
 	miw_xcb_window_t *w = DATA_PTR(self);
-	
+	xcb_atom_t window_type = miw_xcb_intern_atom(c, "_NET_WM_WINDOW_TYPE_NORMAL");
+
 	if (w->window != 0)
 		rb_raise(rb_eRuntimeError, "initialize called twice");
-	miw_xcb_create_window(w, miw_xcb_connection(),
+
+	if (!RB_NIL_P(opt)) {
+		Check_Type(opt, RUBY_T_HASH);
+		VALUE window_type_v = rb_hash_aref(opt, ID2SYM(id_type));
+		if (!RB_NIL_P(window_type_v)) {
+			Check_Type(window_type_v, RUBY_T_SYMBOL);
+			xcb_atom_t atom = find_window_type(window_type_v);
+			if (atom != XCB_ATOM_NONE)
+				window_type = atom;
+		}
+	}
+
+	miw_xcb_create_window(w, c,
 						  NUM2UINT(x), NUM2UINT(y),
 						  NUM2UINT(width), NUM2UINT(height));
+	xcb_change_property(c, XCB_PROP_MODE_REPLACE, w->window,
+						g_atom_net_wm_window_type, XCB_ATOM_ATOM,
+						32, 1, &window_type);
+	xcb_flush(c);
 	st_insert(g_st_window, (st_data_t)w->window, (st_data_t)self);
 	return self;
 }
@@ -731,6 +777,7 @@ miw_xcb_s_setup(VALUE m_xcb)
 	xcb_connection_t *c = g_connection;
     xcb_void_cookie_t cookie;
 	xcb_generic_error_t *xcb_error;
+	char atom_name_buf[64];
 
 	if (c != NULL)
 		rb_raise(rb_eRuntimeError, "setup called twice");
@@ -746,6 +793,15 @@ miw_xcb_s_setup(VALUE m_xcb)
 	g_atom_wm_change_state = miw_xcb_intern_atom(c, "WM_CHANGE_STATE");
 	g_atom_net_wm_name = miw_xcb_intern_atom(c, "_NET_WM_NAME");
 	g_atom_net_wm_window_type = miw_xcb_intern_atom(c, "_NET_WM_WINDOW_TYPE");
+
+	for (int i = 0; i < sizeof(g_window_type_map)/sizeof(g_window_type_map[0]); i++) {
+		g_window_type_map[i].id = rb_intern(g_window_type_map[i].name);
+		int len = sprintf(atom_name_buf, "_NET_WM_WINDOW_TYPE_%s", g_window_type_map[i].name);
+		for (int j = 0; j < len; j++)
+			atom_name_buf[j] = toupper(atom_name_buf[j]);
+		g_window_type_map[i].atom = miw_xcb_intern_atom(c, atom_name_buf);
+	}
+
 	g_atom_utf8_string = miw_xcb_intern_atom(c, "UTF8_STRING");
 	g_connection = c;
 	g_connected ++;
@@ -935,13 +991,6 @@ miw_xcb_init()
 	DEFINE_ID(outside);
 
 	DEFINE_ID(type);
-	DEFINE_ID(normal);
-	DEFINE_ID(dialog);
-	DEFINE_ID(dropdown_menu);
-	DEFINE_ID(popup_menu);
-	DEFINE_ID(combo_box);
-	DEFINE_ID(utility);
-	DEFINE_ID(tooltip);
 
 	g_st_window = st_init_numtable();
 }
