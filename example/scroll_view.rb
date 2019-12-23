@@ -4,6 +4,9 @@ require 'miw'
 require 'miw/window'
 require 'miw/scroll_view'
 require 'miw/layout/box'
+require 'miw/menu'
+require 'miw/menu_bar'
+require 'miw/menu_item'
 
 if __FILE__ == $0
 
@@ -100,12 +103,17 @@ if __FILE__ == $0
     end
   end
 
-  w = MiW::Window.new("test", 10, 10, 400, 400, layout: MiW::Layout::HBox)
+  w = MiW::Window.new("test", 10, 10, 400, 400, layout: MiW::Layout::VBox)
   w.title = "scroll view - スクロールビュー"
   def w.quit_requested
     p :quit_requested
     EM.stop_event_loop
   end
+
+  m = MiW::MenuBar.new "menu"
+  m.add_item MiW::MenuItem.new("File")
+  m.add_item MiW::MenuItem.new("Edit")
+  w.add_child m, resize: [true, false]
 
   sv = MiW::ScrollView.new("sv")
   w.add_child sv, resize: [true, true]
