@@ -1,6 +1,7 @@
 require 'eventmachine'
 require 'cairo'
 require 'miw/theme/colors'
+require 'miw/theme/fonts'
 
 module MiW; end
 
@@ -69,8 +70,19 @@ module MiW
 
   DEFAULT_COLORS = colors
 
+  fonts = Theme::Fonts.new("default")
+  fonts[:monospace] = "monospace 11"
+  fonts[:document] = "sans-serif 11"
+  fonts[:ui] = "sans-serif 11"
+
+  DEFAULT_FONTS = fonts
+
   # pseudo
   def self.colors
     DEFAULT_COLORS
+  end
+
+  def self.fonts
+    DEFAULT_FONTS
   end
 end

@@ -6,13 +6,14 @@ require 'pango'
 
 module MiW
   class TextView < View
-    def initialize(name, **opts)
+    def initialize(name, font: nil, **opts)
       super
       @layouts = []
       @top_linum = 0
       @visible_lines = 0
       @buffer = MiW::Model::TextBuffer.new
       @cursor = 0
+      self.font = font || MiW.fonts[:monospace]
     end
 
     def set_text(text)
@@ -232,6 +233,7 @@ module MiW
           index = @buffer.line_to_pos(linum)
           len = @buffer.end_of_line(index) - index
           layout = cairo.create_pango_layout
+          layout.font_description = font
           text = @buffer[index, len]
           layout.text = text
           @layouts << layout
