@@ -3,9 +3,10 @@ require 'miw/menu_item'
 
 module MiW
   class Menu < View
-    def initialize(name, **opts)
+    def initialize(name, font: nil, **opts)
       super
       @items = []
+      self.font = (font || MiW.fonts[:ui])
     end
     attr_reader :items
 

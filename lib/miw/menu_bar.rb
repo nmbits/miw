@@ -18,6 +18,7 @@ module MiW
       cairo.set_source_color cs[:control_forground]
       items.each do |i|
         l = cairo.create_pango_layout
+        l.font_description = font
         l.text = i.label
         cairo.move_to cx, cy
         cairo.show_pango_layout l
