@@ -21,6 +21,8 @@ Ubuntuのケースで説明します。他のディストリビューション�
 
     > sudo apt install libxcb1-dev libxcb-xkb-dev libcairo2-dev libxkbcommon-x11-dev
 
+Fedoraの場合は、libxcb-devel, cairo-devel, libxkbcommon-x11-develをインストールしてください。
+
 ### 拡張ライブラリのビルド
 
 clone先のディレクトリで以下を実行してください。
