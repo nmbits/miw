@@ -1,3 +1,4 @@
+require 'miw'
 require 'miw/rectangle'
 require 'miw/point'
 require 'miw/size'
@@ -7,8 +8,9 @@ module MiW
   class View
 
     attr_reader :parent, :window, :name
+    attr_accessor :font
 
-    def initialize(name, layout: nil, **opts)
+    def initialize(name, layout: nil, font: nil, **opts)
       @options = opts
       @frame = MiW::Rectangle.new 0, 0, 0, 0
       @name = name
@@ -20,6 +22,7 @@ module MiW
         @layout = layout
       end
       @observers = Set.new
+      @font = font || MiW.fonts[:document]
     end
 
     # geometry
