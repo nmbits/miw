@@ -9,7 +9,7 @@ module MiW
 
     def initialize(name, orientation: :vertical, thickness: 16,
                    range: (0..1000), value: 0, step: nil,
-                   proportion: 50, min_proportion: 50, **opts)
+                   proportion: 50, min_proportion: 50, size: nil, **opts)
       super name, **opts
       unless VALID_ORIENTATION.include? orientation
         raise ArgumentError, "invalid orientation specified"
@@ -23,10 +23,14 @@ module MiW
       @step = step
       @mouse_in = false
       @knob = Rectangle.new(0, 0, 0, 0)
-      if @orientation == :vertical
-        resize_to @thickness, 0
+      if size
+        resize_to size
       else
-        resize_to 0, @thickness
+        if @orientation == :vertical
+          resize_to @thickness, self.size.height
+        else
+          resize_to self.size.width, @thickness
+        end
       end
     end
     attr_reader :orientaion, :thickness, :range, :value, :step, :proportion

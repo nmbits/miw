@@ -10,9 +10,12 @@ module MiW
     attr_reader :parent, :window, :name
     attr_accessor :font
 
-    def initialize(name, layout: nil, font: nil, **opts)
+    DEFAULT_SIZE = Size.new 50, 50
+
+    def initialize(name, layout: nil, font: nil, size: nil, **opts)
       @options = opts
       @frame = MiW::Rectangle.new 0, 0, 0, 0
+      @frame.resize_to size || DEFAULT_SIZE
       @name = name
       @children = []
       @visible = true
