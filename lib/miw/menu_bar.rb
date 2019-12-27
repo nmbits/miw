@@ -9,7 +9,7 @@ module MiW
     MARGINE_RATIO = 0.4 # pseudo
     def initialize(name, **opts)
       super
-      resize_to(1, 1)
+      resize_to DEFAULT_SIZE
       @pango_layouts = []
     end
 
