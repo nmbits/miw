@@ -53,6 +53,10 @@ module MiW
       @window ? @window.cairo : nil
     end
 
+    def pango_layout
+      @window ? @window.pango_layout : nil
+    end
+
     # hooks
 
     def draw(rect)

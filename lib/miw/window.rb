@@ -10,6 +10,7 @@ module MiW
     def initialize(title, x, y, width, height, layout: nil, **opts)
       super x, y, width, height, opts
       @cairo = Cairo::Context.new surface
+      @pango_layout = @cairo.create_pango_layout
       @mouse_handler = MouseHandler.new self
       @root = View.new "__miw_root_view__", layout: layout
       @root.root = true
@@ -18,9 +19,10 @@ module MiW
       @root.show
       @width = width
       @height = height
+      @invalid_rect = Rectangle.new(0, 0, width, height)
     end
 
-    attr_reader :cairo
+    attr_reader :cairo, :pango_layout
     attr_accessor :focus
 
     def invalidate(x, y, width, height)
