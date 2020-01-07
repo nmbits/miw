@@ -5,7 +5,6 @@ require 'miw/layout/box'
 
 module MiW
   class Menu < View
-    EXTENT_RATIO = 1.4 # pseudo
     def initialize(name, font: nil, **opts)
       super name, **opts
       @layout = Layout::VBox.new
@@ -19,30 +18,24 @@ module MiW
       @preferred_size.resize_to 0, 0
       pango_layout.font_description = font
       @items.each do |item|
-        update_item_size item
+        item.resize_to_preferred
         @preferred_size.width = [@preferred_size.width, item.frame.width].max
         @preferred_size.height += item.frame.height
       end
     end
 
     def add_item(item)
+      raise ArgumentError, "The item is already a member of another menu." if item.menu
       @items << item
+      item.menu = self
       if attached?
-        update_item_size item
+        item.resize_to_preferred
         @preferred_size.width = [@preferred_size.width, item.frame.width].max
         @preferred_size.height = @preferred_size.height + item.frame.height
       end
     end
 
     def add_separator_item
-    end
-
-    def update_item_size(item)
-      pango_layout.text = item.label
-      s = pango_layout.pixel_size
-      w = s[0] + 20 #pseudo
-      h = (s[1] * EXTENT_RATIO).ceil
-      item.frame.resize_to w, h
     end
 
     def each_item_frame_with_hint
@@ -63,7 +56,7 @@ module MiW
       cairo.rectangle 0, 0, width, height
       cairo.set_source_color cs[:control_background]
       cairo.fill
-      @items.each { |item| item.draw self, false }
+      @items.each { |item| item.draw false }
     end
   end
 end
