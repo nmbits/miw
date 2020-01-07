@@ -70,6 +70,10 @@ module MiW
       @focus.key_up keysym, state if @focus
     end
 
+    def shown
+      @root.do_layout
+    end
+
     def set_tracking(view)
       @mouse_handler.set_tracking(view)
     end

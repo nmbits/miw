@@ -47,6 +47,9 @@ ID id_frame_resized;
 ID id_frame_moved;
 ID id_quit_requested;
 
+ID id_shown;
+ID id_hidden;
+
 ID id_entered;
 ID id_exited;
 ID id_inside;
@@ -516,8 +519,9 @@ miw_xcb_win_grab_pointer(VALUE self)
 			xcb_grab_pointer(c,
 							 0,
 							 w->window,
-							 XCB_EVENT_MASK_BUTTON_RELEASE |
-							 XCB_EVENT_MASK_POINTER_MOTION,
+							 (XCB_EVENT_MASK_BUTTON_PRESS      | XCB_EVENT_MASK_BUTTON_RELEASE   |
+							  XCB_EVENT_MASK_POINTER_MOTION    | XCB_EVENT_MASK_BUTTON_MOTION    |
+							  XCB_EVENT_MASK_ENTER_WINDOW      | XCB_EVENT_MASK_LEAVE_WINDOW     ),
 							 XCB_GRAB_MODE_ASYNC,
 							 XCB_GRAB_MODE_ASYNC,
 							 XCB_NONE,
@@ -525,7 +529,7 @@ miw_xcb_win_grab_pointer(VALUE self)
 							 XCB_CURRENT_TIME);
 		reply = xcb_grab_pointer_reply(c, cookie, NULL);
 		if (reply) {
-			printf("reply->status: %d\n", reply->status);
+			// printf("reply->status: %d\n", reply->status);
 			if (reply->status == XCB_GRAB_STATUS_SUCCESS)
 				ret = Qtrue;
 			free(reply);
@@ -545,6 +549,22 @@ miw_xcb_win_ungrab_pointer(VALUE self)
 		return Qtrue;
 	}
 	return Qfalse;
+}
+
+static VALUE
+miw_xcb_win_resize_to(VALUE self, VALUE w_, VALUE h_)
+{
+	miw_xcb_window_t *w = (miw_xcb_window_t *)DATA_PTR(self);
+	xcb_connection_t *c = miw_xcb_connection();
+	if (w->window) {
+		uint32_t values[2];
+		values[0] = NUM2UINT(w_);
+		values[1] = NUM2UINT(h_);
+		xcb_configure_window(c, w->window, XCB_CONFIG_WINDOW_WIDTH | XCB_CONFIG_WINDOW_HEIGHT,
+							 values);
+		xcb_flush(c);
+	}
+	return Qnil;
 }
 
 static VALUE
@@ -608,6 +628,7 @@ miw_xcb_on_motion_notify(xcb_generic_event_t *event)
 	xcb_window_t window = e->event;
 	VALUE target = miw_xcb_window_lookup(window);
 
+	// printf("motion_notify: %d, %d\n", e->event_x, e->event_y);
 	if (target != Qnil)
 		rb_funcall(target, id_mouse_moved, 4,
 				   INT2FIX(e->event_x), INT2FIX(e->event_y),
@@ -621,6 +642,7 @@ miw_xcb_on_enter_notify(xcb_generic_event_t *event)
 	xcb_window_t window = e->event;
 	VALUE target = miw_xcb_window_lookup(window);
 
+	// printf("enter_notify: %d, %d\n", e->event_x, e->event_y);
 	if (target != Qnil)
 		rb_funcall(target, id_mouse_moved, 4,
 				   INT2FIX(e->event_x), INT2FIX(e->event_y),
@@ -634,6 +656,7 @@ miw_xcb_on_leave_notify(xcb_generic_event_t *event)
 	xcb_window_t window = e->event;
 	VALUE target = miw_xcb_window_lookup(window);
 
+	// printf("leave_notify: %d, %d\n", e->event_x, e->event_y);
 	if (target != Qnil)
 		rb_funcall(target, id_mouse_moved, 4,
 				   INT2FIX(e->event_x), INT2FIX(e->event_y),
@@ -722,6 +745,18 @@ miw_xcb_on_configure_notify(xcb_generic_event_t *event)
 }
 
 static void
+miw_xcb_on_map_notify(xcb_generic_event_t *event)
+{
+	xcb_map_notify_event_t *e = (xcb_map_notify_event_t *)event;
+	xcb_window_t window = e->window;
+	VALUE target = miw_xcb_window_lookup(window);
+	miw_xcb_window_t *w;
+
+	if (target != Qnil)
+		rb_funcall(target, id_shown, 0);
+}
+
+static void
 miw_xcb_on_unmap_notify(xcb_generic_event_t *event)
 {
 	xcb_unmap_notify_event_t *e = (xcb_unmap_notify_event_t *)event;
@@ -729,7 +764,8 @@ miw_xcb_on_unmap_notify(xcb_generic_event_t *event)
 	VALUE target = miw_xcb_window_lookup(window);
 	miw_xcb_window_t *w;
 
-	if (target != Qnil) ;
+	if (target != Qnil)
+		rb_funcall(target, id_hidden, 0);
 }
 
 static void
@@ -903,6 +939,10 @@ miw_xcb_process_single_event(xcb_generic_event_t *event, xcb_connection_t *c)
 		miw_xcb_on_configure_notify(event);
 		break;
 
+	case XCB_MAP_NOTIFY:
+		miw_xcb_on_map_notify(event);
+		break;
+
 	case XCB_UNMAP_NOTIFY:
 		miw_xcb_on_unmap_notify(event);
 		break;
@@ -964,6 +1004,7 @@ miw_xcb_init()
 	rb_define_method(c, "update", miw_xcb_win_update, 4);
 	rb_define_method(c, "grab_pointer", miw_xcb_win_grab_pointer, 0);
 	rb_define_method(c, "ungrab_pointer", miw_xcb_win_ungrab_pointer, 0);
+	rb_define_method(c, "resize_to", miw_xcb_win_resize_to, 2);
 
 	DEFAULT_HOOK(draw, 4);
 	DEFAULT_HOOK(mouse_moved, 4);
@@ -975,6 +1016,9 @@ miw_xcb_init()
 	DEFAULT_HOOK(frame_moved, 2);
 	DEFAULT_HOOK(quit_requested, 0);
 	
+	DEFAULT_HOOK(shown, 0);
+	DEFAULT_HOOK(hidden, 0);
+
 	DEFINE_ID(draw);
 	DEFINE_ID(mouse_moved);
 	DEFINE_ID(mouse_down);
@@ -984,6 +1028,9 @@ miw_xcb_init()
 	DEFINE_ID(frame_resized);
 	DEFINE_ID(frame_moved);
 	DEFINE_ID(quit_requested);
+
+	DEFINE_ID(shown);
+	DEFINE_ID(hidden);
 
 	DEFINE_ID(entered);
 	DEFINE_ID(exited);

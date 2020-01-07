@@ -108,7 +108,7 @@ module MiW
 
     def set_tracking(view)
       if view
-        if @tracker_view.nil? && @last_view == view
+        if @tracker_view.nil?
           @tracker_view = view
           true
         else

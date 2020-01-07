@@ -4,6 +4,7 @@ require 'miw'
 require 'miw/window'
 require 'miw/menu'
 require 'miw/menu_item'
+require 'miw/popup_menu'
 
 if __FILE__ == $0
 
@@ -12,6 +13,15 @@ if __FILE__ == $0
     p :quit_requested
     EM.stop_event_loop
   end
+
+  popup = MiW::PopupMenu.new("popup")
+  item = MiW::MenuItem.new("Open ...")
+  popup.add_item item
+  item = MiW::MenuItem.new("Save ...")
+  popup.add_item item
+  item = MiW::MenuItem.new("Save as ...")
+  popup.add_item item
+  popup.go 200, 200
 
   menu = MiW::Menu.new "menu00"
   w.add_child menu, resize: [true, true]

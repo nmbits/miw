@@ -8,30 +8,29 @@ module MiW
     EXTENT_RATIO = 1.4 # pseudo
     def initialize(name, font: nil, **opts)
       super name, **opts
-      @layout = MiW::Layout::VBox.new
+      @layout = Layout::VBox.new
       @items = []
+      @preferred_size = Size.new(0, 0)
       self.font = (font || MiW.fonts[:ui])
     end
-    attr_reader :items
+    attr_reader :items, :preferred_size
 
     def attached_to_window
-      size = Size.new 0, 0
+      @preferred_size.resize_to 0, 0
       pango_layout.font_description = font
       @items.each do |item|
         update_item_size item
-        size.width = [size.width, i.frame.width].max
-        size.height += item.frame.height
+        @preferred_size.width = [@preferred_size.width, item.frame.width].max
+        @preferred_size.height += item.frame.height
       end
-      resize_to size
     end
 
     def add_item(item)
       @items << item
       if attached?
         update_item_size item
-        width = [self.width, item.frame.width].max
-        height = self.height + item.frame.height
-        resize_to width, height
+        @preferred_size.width = [@preferred_size.width, item.frame.width].max
+        @preferred_size.height = @preferred_size.height + item.frame.height
       end
     end
 
