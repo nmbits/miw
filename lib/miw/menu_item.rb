@@ -12,19 +12,25 @@ module MiW
       @icon = icon
       @type = type
       @frame = Rectangle.new 0, 0, 1, 1
+      @highlight = false
     end
     attr_reader :label, :frame, :shortcut, :accel_key, :icon, :type
-    attr_accessor :menu
+    attr_accessor :menu, :highlight
 
     def draw(highlight)
-      cs = MiW.colors
-      panl = menu.pango_layout
       cairo = menu.cairo
+      cs = MiW.colors
+      bgcolor = highlight ? cs[:control_background_highlight] : cs[:control_background]
+      fgcolor = highlight ? cs[:control_forground_highlight] : cs[:control_forground]
+      cairo.rectangle frame.x, frame.y, frame.width, frame.height
+      cairo.set_source_color bgcolor
+      cairo.fill
+      panl = menu.pango_layout
       panl.text = @label
       x = @frame.x + @icon_width + 10 # pseudo
       y = @frame.y + ((@frame.height - @frame.height / EXTENT_RATIO) / 2).to_i
       cairo.move_to x, y
-      cairo.set_source_color cs[:control_forground]
+      cairo.set_source_color fgcolor
       cairo.show_pango_layout panl
     end
 

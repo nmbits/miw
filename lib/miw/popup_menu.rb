@@ -24,8 +24,5 @@ module MiW
 
     def mouse_down(*a)
     end
-
-    def mouse_moved(x, y, *a)
-    end
   end
 end

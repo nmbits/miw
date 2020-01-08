@@ -44,7 +44,7 @@ module MiW
   colors[:control_background_disabled]  = "#555"
 
   colors[:control_forground]           = "#888"
-  colors[:control_forground_highlight] = "#bbb"
+  colors[:control_forground_highlight] = "#444"
   colors[:control_forground_active]    = "#bbb"
   colors[:control_forground_disabled]  = "#000"
 
