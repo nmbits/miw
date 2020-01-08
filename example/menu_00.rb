@@ -31,8 +31,17 @@ if __FILE__ == $0
   menu.add_item item
   item = MiW::MenuItem.new("Save ...")
   menu.add_item item
+  item.enable = false
   item = MiW::MenuItem.new("Save as ...")
   menu.add_item item
+
+  class Observer
+    def item_selected(menu, item)
+      puts "#{item.label} selected"
+    end
+  end
+
+  menu.add_observer Observer.new
 
   w.show
   MiW.run

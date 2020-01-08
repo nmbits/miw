@@ -77,5 +77,18 @@ module MiW
         invalidate
       end
     end
+
+    def mouse_down(x, y, button, state, count)
+    end
+
+    def mouse_up(x, y, button, state)
+      @items.each do |item|
+        next unless item.enable?
+        if item.frame.contain? x, y
+          trigger :item_selected, item
+          break
+        end
+      end
+    end
   end
 end
