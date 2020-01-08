@@ -25,7 +25,7 @@ module MiW
     end
 
     def add_item(item)
-      raise ArgumentError, "The item is already a member of another menu." if item.menu
+      raise ArgumentError, "The item is a member of another menu." if item.menu
       @items << item
       item.menu = self
       if attached?
@@ -56,13 +56,14 @@ module MiW
       cairo.rectangle 0, 0, width, height
       cairo.set_source_color cs[:control_background]
       cairo.fill
-      @items.each_with_index { |item, i| item.draw(i == @highlight) }
+      @items.each_with_index { |item, i| item.draw }
     end
 
     def mouse_moved(x, y, transit, state)
       prev_highlight = @highlight
       @highlight = nil
       @items.each_with_index do |item, i|
+        next unless item.enable?
         if item.frame.y > y
           break
         elsif item.frame.contain? x, y

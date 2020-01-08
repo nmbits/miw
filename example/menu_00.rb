@@ -19,6 +19,7 @@ if __FILE__ == $0
   popup.add_item item
   item = MiW::MenuItem.new("Save ...")
   popup.add_item item
+  item.enable = false
   item = MiW::MenuItem.new("Save as ...")
   popup.add_item item
   popup.go 200, 200
