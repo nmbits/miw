@@ -568,6 +568,27 @@ miw_xcb_win_resize_to(VALUE self, VALUE w_, VALUE h_)
 }
 
 static VALUE
+miw_xcb_win_get_mouse(VALUE self)
+{
+	miw_xcb_window_t *w = (miw_xcb_window_t *)DATA_PTR(self);
+	xcb_connection_t *c = miw_xcb_connection();
+	if (w->window) {
+		xcb_query_pointer_cookie_t cookie =
+			xcb_query_pointer(c, w->window);
+		xcb_query_pointer_reply_t *reply =
+			xcb_query_pointer_reply(c, cookie, NULL);
+		if (reply) {
+			VALUE ret = rb_ary_new();
+			rb_ary_push(ret, INT2NUM(reply->win_x));
+			rb_ary_push(ret, INT2NUM(reply->win_y));
+			free(reply);
+			return ret;
+		}
+	}
+	return Qnil;
+}
+
+static VALUE
 miw_xcb_default_hook0(VALUE self)
 {
 	return Qnil;
@@ -1005,6 +1026,7 @@ miw_xcb_init()
 	rb_define_method(c, "grab_pointer", miw_xcb_win_grab_pointer, 0);
 	rb_define_method(c, "ungrab_pointer", miw_xcb_win_ungrab_pointer, 0);
 	rb_define_method(c, "resize_to", miw_xcb_win_resize_to, 2);
+	rb_define_method(c, "get_mouse", miw_xcb_win_get_mouse, 0);
 
 	DEFAULT_HOOK(draw, 4);
 	DEFAULT_HOOK(mouse_moved, 4);
