@@ -1,5 +1,6 @@
 require 'miw'
 require 'miw/menu_item'
+require 'miw/separator_item'
 require 'miw/size'
 require 'miw/layout/box'
 
@@ -36,6 +37,7 @@ module MiW
     end
 
     def add_separator_item
+      add_item SeparatorItem.new
     end
 
     def each_item_frame_with_hint

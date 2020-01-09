@@ -22,6 +22,9 @@ if __FILE__ == $0
   item.enable = false
   item = MiW::MenuItem.new("Save as ...")
   popup.add_item item
+  popup.add_separator_item
+  item = MiW::MenuItem.new("Close")
+  popup.add_item item
   popup.go 200, 200
 
   menu = MiW::Menu.new "menu00"
@@ -33,6 +36,9 @@ if __FILE__ == $0
   menu.add_item item
   item.enable = false
   item = MiW::MenuItem.new("Save as ...")
+  menu.add_item item
+  menu.add_separator_item
+  item = MiW::MenuItem.new("Close")
   menu.add_item item
 
   class Observer
