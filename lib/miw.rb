@@ -27,6 +27,10 @@ module MiW
     end
   end
 
+  def self.get_mouse
+    PLATFORM.get_mouse
+  end
+
   colors = Theme::Colors.new("default")
   colors[:content_background]           = "#111"
   colors[:content_background_highlight] = "#9ff"

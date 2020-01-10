@@ -552,6 +552,22 @@ miw_xcb_win_ungrab_pointer(VALUE self)
 }
 
 static VALUE
+miw_xcb_win_move_to(VALUE self, VALUE x_, VALUE y_)
+{
+	miw_xcb_window_t *w = (miw_xcb_window_t *)DATA_PTR(self);
+	xcb_connection_t *c = miw_xcb_connection();
+	if (w->window) {
+		uint32_t values[2];
+		values[0] = NUM2UINT(x_);
+		values[1] = NUM2UINT(y_);
+		xcb_configure_window(c, w->window, XCB_CONFIG_WINDOW_X | XCB_CONFIG_WINDOW_Y,
+							 values);
+		xcb_flush(c);
+	}
+	return Qnil;
+}
+
+static VALUE
 miw_xcb_win_resize_to(VALUE self, VALUE w_, VALUE h_)
 {
 	miw_xcb_window_t *w = (miw_xcb_window_t *)DATA_PTR(self);
@@ -578,9 +594,8 @@ miw_xcb_win_get_mouse(VALUE self)
 		xcb_query_pointer_reply_t *reply =
 			xcb_query_pointer_reply(c, cookie, NULL);
 		if (reply) {
-			VALUE ret = rb_ary_new();
-			rb_ary_push(ret, INT2NUM(reply->win_x));
-			rb_ary_push(ret, INT2NUM(reply->win_y));
+			VALUE ret =
+				rb_ary_new_from_args(2, INT2NUM(reply->win_x), INT2NUM(reply->win_y));
 			free(reply);
 			return ret;
 		}
@@ -992,6 +1007,24 @@ miw_xcb_s_process_event(VALUE m_xcb)
 	return Qnil;
 }
 
+static VALUE
+miw_xcb_s_get_mouse(VALUE self)
+{
+	xcb_connection_t *c = miw_xcb_connection();
+
+	xcb_query_pointer_cookie_t cookie =
+		xcb_query_pointer(c, miw_xcb_screen(c)->root);
+	xcb_query_pointer_reply_t *reply =
+		xcb_query_pointer_reply(c, cookie, NULL);
+	if (reply) {
+		VALUE ret =
+			rb_ary_new_from_args(2, INT2NUM(reply->win_x), INT2NUM(reply->win_y));
+		free(reply);
+		return ret;
+	}
+	return Qnil;
+}
+
 #define DEFINE_ID(name) id_##name = rb_intern(#name)
 #define DEFAULT_HOOK(name, a) rb_define_method(c, #name, miw_xcb_default_hook##a, a)
 
@@ -1009,6 +1042,7 @@ miw_xcb_init()
 	rb_define_singleton_method(m_xcb, "setup", miw_xcb_s_setup, 0);
 	rb_define_singleton_method(m_xcb, "process_event", miw_xcb_s_process_event, 0);
 	rb_define_singleton_method(m_xcb, "file_descriptor", miw_xcb_s_file_descriptor, 0);
+	rb_define_singleton_method(m_xcb, "get_mouse", miw_xcb_s_get_mouse, 0);
 
 	c = rb_define_class_under(m_xcb, "Window", rb_cData);
 	rb_define_alloc_func(c, miw_xcb_win_alloc);
@@ -1025,6 +1059,7 @@ miw_xcb_init()
 	rb_define_method(c, "update", miw_xcb_win_update, 4);
 	rb_define_method(c, "grab_pointer", miw_xcb_win_grab_pointer, 0);
 	rb_define_method(c, "ungrab_pointer", miw_xcb_win_ungrab_pointer, 0);
+	rb_define_method(c, "move_to", miw_xcb_win_move_to, 2);
 	rb_define_method(c, "resize_to", miw_xcb_win_resize_to, 2);
 	rb_define_method(c, "get_mouse", miw_xcb_win_get_mouse, 0);
 

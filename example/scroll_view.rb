@@ -68,7 +68,7 @@ if __FILE__ == $0
         trigger :view_port_changed
         invalidate
       end
-      p window.get_mouse
+      p MiW.get_mouse
     end
 
     def draw(rect)

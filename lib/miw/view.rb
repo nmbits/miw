@@ -383,5 +383,13 @@ module MiW
     def remove_observer(observer)
       @observers.delete observer
     end
+
+    # mouse
+    def get_mouse
+      if attached?
+        x, y = window.get_mouse
+        convert_from_window x, y
+      end
+    end
   end
 end

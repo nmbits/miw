@@ -38,6 +38,24 @@ module MiW
       update(0, 0, @width, @height) if @invalid_rect
     end
 
+    def convert_from_screen(a1, a2 = nil)
+      x, y = pos
+      if a2
+        [a1 - x, a2 - y]
+      else
+        a1.dup.offset_by -x, -y
+      end
+    end
+
+    def convert_to_screen(a1, a2 = nil)
+      x, y = pos
+      if a2
+        [a1 + x, a2 + y]
+      else
+        a1.dup.offset_by x, y
+      end
+    end
+
     def draw(x, y, width, height)
       rect = Rectangle.new(x, y, width, height)
       if @invalid_rect

@@ -6,23 +6,36 @@ require 'pp'
 
 module MiW
   class PopupMenu < Menu
-    def go(x, y)
+    def show
+      super
       unless attached?
-        win = Window.new("popup", x, y, 1, 1, layout: Layout::HBox, type: :popup_menu)
-        win.add_child self, resize: [true, true]
-        self.show
+        follow_cursor
+        w = Window.new "popup_#{name}", x, y, 1, 1, layout: Layout::HBox, type: :popup_menu
+        w.add_child self, resize: [true, true]
         size = preferred_size
-        win.resize_to size.width, size.height
-        win.show
+        w.resize_to size.width, size.height
+        w.show
+      end
+    end
+
+    def hide
+      if attached?
+        window.hide
+      end
+    end
+
+    def follow_cursor
+      x, y = MiW.get_mouse
+      if attached?
+        window.move_to x, y
+      else
+        offset_to x, y
       end
     end
 
     def mouse_up(*a)
-      window.set_tracking nil
-      window.hide # pseudo
-    end
-
-    def mouse_down(*a)
+      super
+      hide
     end
   end
 end
