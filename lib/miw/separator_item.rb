@@ -13,8 +13,14 @@ module MiW
         panl = menu.pango_layout
         panl.text = "M"
         w, h = panl.pixel_size
-        frame.resize_to w, h / 2
-        @Mpx = w
+        case appearance
+        when :long
+          frame.resize_to w, h / 2
+          @Mpx = w
+        when :short
+          frame.resize_to w / 2, h
+          @Mpx = h
+        end
       end
     end
 
@@ -25,8 +31,15 @@ module MiW
     def draw
       cairo = menu.cairo
       cs = MiW.colors
-      cairo.move_to frame.left + @Mpx / 2, frame.top + frame.height / 2
-      cairo.line_to frame.right - @Mpx / 2, frame.top + frame.height / 2
+      case appearance
+      when :long
+        cairo.move_to frame.left + @Mpx / 2, frame.top + frame.height / 2
+        cairo.line_to frame.right - @Mpx / 2, frame.top + frame.height / 2
+      when :short
+        h = (frame.height * (1.0 - 1 / EXTENT_RATIO) / 2).to_i
+        cairo.move_to frame.left + frame.width / 2, frame.top + h
+        cairo.line_to frame.left + frame.width / 2, frame.bottom - h
+      end
       cairo.set_source_color cs[:control_background_disabled]
       cairo.stroke
     end

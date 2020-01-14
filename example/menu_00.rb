@@ -34,7 +34,7 @@ if __FILE__ == $0
       item = MiW::MenuItem.new("Save as ...")
       popup.add_item item
       popup.add_separator_item
-      item = MiW::MenuItem.new("Close")
+      item = MiW::MenuItem.new("閉じる")
       popup.add_item item
       popup.show
     end
@@ -43,7 +43,8 @@ if __FILE__ == $0
   m = MiW::MenuBar.new "menu_bar"
   m.add_item MiW::MenuItem.new("File")
   m.add_item MiW::MenuItem.new("Edit")
-  m.add_item MiW::MenuItem.new("表示")
+  m.add_separator_item
+  m.add_item MiW::MenuItem.new("hoge")
   w.add_child m, resize: [true, false]
   m.show
 
