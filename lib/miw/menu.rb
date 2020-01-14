@@ -29,6 +29,7 @@ module MiW
       raise ArgumentError, "The item is a member of another menu." if item.menu
       @items << item
       item.menu = self
+      item.appearance = :long
       if attached?
         item.resize_to_preferred
         @preferred_size.width = [@preferred_size.width, item.frame.width].max
