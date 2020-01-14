@@ -21,7 +21,15 @@ module MiW
       @preferred_size ||= calculate_preferred_size
     end
 
-    def add_item(item)
+    def add_item(item_or_label)
+      case item_or_label
+      when String
+        item = MenuItem.new item_or_label
+      when MenuItem
+        item = item_or_label
+      else
+        raise TypeError, "invalid argument type"
+      end
       add_item_common item, :long
     end
 
@@ -93,6 +101,7 @@ module MiW
       item.appearance = appearance
       @preferred_size = nil
       resize_to_preferred if attached?
+      item
     end
 
     def item_layout_hint

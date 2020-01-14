@@ -26,16 +26,12 @@ if __FILE__ == $0
   def v.mouse_down(x, y, button, state, count)
     if button == 3
       popup = MiW::PopupMenu.new("popup")
-      item = MiW::MenuItem.new("Open ...")
-      popup.add_item item
-      item = MiW::MenuItem.new("Save ...")
-      popup.add_item item
+      popup.add_item "Open ..."
+      item = popup.add_item "Save ..."
       item.enable = false
-      item = MiW::MenuItem.new("Save as ...")
-      popup.add_item item
+      popup.add_item "Save as ..."
       popup.add_separator_item
-      item = MiW::MenuItem.new("閉じる")
-      popup.add_item item
+      popup.add_item "閉じる"
       popup.show
     end
   end
