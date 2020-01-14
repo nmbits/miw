@@ -5,6 +5,7 @@ require 'miw/rectangle'
 module MiW
   class MenuItem
     EXTENT_RATIO = 1.4 # pseudo
+    MARGINE = 20 # pseudo
     def initialize(label, shortcut: nil, accel_key: nil, icon: nil, type: :default)
       @label = label
       @shortcut = shortcut
@@ -45,16 +46,17 @@ module MiW
       cairo.set_source_color bgcolor
       cairo.fill
       cairo.set_source_color fgcolor
+      panl = menu.pango_layout
+      panl.text = @label
       case @appearance
       when :long
-        panl = menu.pango_layout
-        panl.text = @label
         x = @frame.x + @icon_width + 10 # pseudo
-        y = @frame.y + ((@frame.height - @frame.height / EXTENT_RATIO) / 2).to_i
-        cairo.move_to x, y
-        cairo.show_pango_layout panl
       when :short
+        x = @frame.x + MARGINE / 2 # pseudo
       end
+      y = @frame.y + (@frame.height * (1.0 - 1 / EXTENT_RATIO) / 2).to_i
+      cairo.move_to x, y
+      cairo.show_pango_layout panl
     end
 
     def resize_to_preferred
@@ -68,7 +70,7 @@ module MiW
           w += @icon_width
         when :short
         end
-        w += 20 #pseudo
+        w += MARGINE #pseudo
         h = (h * EXTENT_RATIO).ceil
         frame.resize_to w, h
       end

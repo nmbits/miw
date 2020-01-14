@@ -7,7 +7,7 @@ require 'set'
 module MiW
   class View
 
-    attr_reader :parent, :window, :name
+    attr_reader :parent, :window, :name, :layout
     attr_accessor :font
 
     DEFAULT_SIZE = Size.new 50, 50
@@ -241,8 +241,18 @@ module MiW
       end
       do_layout if @window
       frame_resized @frame.width, @frame.height
+      @frame.size
     end
     
+    def preferred_size
+      size
+    end
+
+    def resize_to_preferred
+      sz = preferred_size
+      resize_to sz
+    end
+
     def offset_by(a1, a2 = nil)
       if a2
         offset_to @frame.x + a1, @frame.y + a2

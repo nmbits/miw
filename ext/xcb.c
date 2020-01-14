@@ -579,6 +579,8 @@ miw_xcb_win_resize_to(VALUE self, VALUE w_, VALUE h_)
 		xcb_configure_window(c, w->window, XCB_CONFIG_WINDOW_WIDTH | XCB_CONFIG_WINDOW_HEIGHT,
 							 values);
 		xcb_flush(c);
+		w->width = values[0];
+		w->height = values[1];
 	}
 	return Qnil;
 }

@@ -14,10 +14,10 @@ module MiW
     def shown
       follow_cursor
       grab_pointer
-      add_child @popup_menu, resize: [true, true]
-      size = popup_menu.preferred_size
-      resize_to size.width, size.height
       set_tracking @popup_menu
+      add_child @popup_menu, resize: [true, true]
+      size = popup_menu.resize_to_preferred
+      resize_to size.width, size.height
     end
 
     def hidden

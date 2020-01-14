@@ -6,52 +6,31 @@ require 'miw/layout/box'
 
 module MiW
   class Menu < View
-    def initialize(name, font: nil, **opts)
-      super name, **opts
-      @layout = Layout::VBox.new
+    def initialize(name, font: MiW.fonts[:ui], layout: Layout::VBox, **opts)
+      super name, font: font, layout: layout, **opts
       @items = []
-      @preferred_size = Size.new(0, 0)
-      self.font = (font || MiW.fonts[:ui])
     end
-    attr_reader :items, :preferred_size
+    attr_reader :items
 
     def attached_to_window
-      @preferred_size.resize_to 0, 0
       pango_layout.font_description = font
-      @items.each do |item|
-        item.resize_to_preferred
-        @preferred_size.width = [@preferred_size.width, item.frame.width].max
-        @preferred_size.height += item.frame.height
-      end
+      resize_to_preferred
+    end
+
+    def preferred_size
+      @preferred_size ||= calculate_preferred_size
     end
 
     def add_item(item)
-      raise ArgumentError, "The item is a member of another menu." if item.menu
-      @items << item
-      item.menu = self
-      item.appearance = :long
-      if attached?
-        item.resize_to_preferred
-        @preferred_size.width = [@preferred_size.width, item.frame.width].max
-        @preferred_size.height = @preferred_size.height + item.frame.height
-      end
+      add_item_common item, :long
     end
 
     def add_separator_item
       add_item SeparatorItem.new
     end
 
-    def each_item_frame_with_hint
-      hint = {resize: [true, false]}
-      if block_given?
-        @items.each { |item| yield item.frame, hint }
-      else
-        self.to_enum __callee__
-      end
-    end
-
     def do_layout
-      @layout.do_layout each_item_frame_with_hint, self.bounds
+      layout.do_layout each_item_frame_with_hint, self.bounds
     end
 
     def draw(rect)
@@ -90,6 +69,44 @@ module MiW
             break
           end
         end
+      end
+    end
+
+    protected
+
+    def calculate_preferred_size
+      size = Size.new 0, 0
+      if attached?
+        items.each do |item|
+          item.resize_to_preferred
+          size.width = [size.width, item.frame.width].max
+          size.height += item.frame.height
+        end
+      end
+      size
+    end
+
+    def add_item_common(item, appearance)
+      raise ArgumentError, "The item is a member of another menu." if item.menu
+      @items << item
+      item.menu = self
+      item.appearance = appearance
+      @preferred_size = nil
+      resize_to_preferred if attached?
+    end
+
+    def item_layout_hint
+      {resize: [true, false]}
+    end
+
+    private
+
+    def each_item_frame_with_hint
+      hint = item_layout_hint
+      if block_given?
+        @items.each { |item| yield item.frame, hint }
+      else
+        self.to_enum __callee__
       end
     end
   end
