@@ -484,6 +484,25 @@ miw_xcb_win_size(VALUE self)
 }
 
 static VALUE
+miw_xcb_win_frame(VALUE self)
+{
+	miw_xcb_window_t *w = (miw_xcb_window_t *)DATA_PTR(self);
+	xcb_connection_t *c = miw_xcb_connection();
+	if (w->window) {
+		xcb_get_geometry_reply_t *geom =
+			xcb_get_geometry_reply(c,
+								   xcb_get_geometry(c, w->window),
+								   NULL);
+		VALUE ret = rb_ary_new_from_args(4,
+										 INT2NUM(geom->x), INT2NUM(geom->y),
+										 UINT2NUM(geom->width), UINT2NUM(geom->height));
+		free(geom);
+		return ret;
+	}
+	return Qnil;
+}
+
+static VALUE
 miw_xcb_win_update(VALUE self, VALUE x, VALUE y, VALUE width, VALUE height)
 {
 	miw_xcb_window_t *w = (miw_xcb_window_t *)DATA_PTR(self);
@@ -579,8 +598,6 @@ miw_xcb_win_resize_to(VALUE self, VALUE w_, VALUE h_)
 		xcb_configure_window(c, w->window, XCB_CONFIG_WINDOW_WIDTH | XCB_CONFIG_WINDOW_HEIGHT,
 							 values);
 		xcb_flush(c);
-		w->width = values[0];
-		w->height = values[1];
 	}
 	return Qnil;
 }
@@ -1058,6 +1075,7 @@ miw_xcb_init()
 	rb_define_method(c, "sync", miw_xcb_win_sync, 4);
 	rb_define_method(c, "pos", miw_xcb_win_pos, 0);
 	rb_define_method(c, "size", miw_xcb_win_size, 0);
+	rb_define_method(c, "frame", miw_xcb_win_frame, 0);
 	rb_define_method(c, "update", miw_xcb_win_update, 4);
 	rb_define_method(c, "grab_pointer", miw_xcb_win_grab_pointer, 0);
 	rb_define_method(c, "ungrab_pointer", miw_xcb_win_ungrab_pointer, 0);

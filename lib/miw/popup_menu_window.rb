@@ -1,23 +1,18 @@
 
-require 'miw/window'
+require 'miw/menu_window'
 require 'miw/layout/box'
 
 module MiW
-  class PopupMenuWindow < Window
+  class PopupMenuWindow < MenuWindow
     def initialize(popup_menu)
-      name = "__window__#{popup_menu}"
-      super name, 0, 0, 1, 1, layout: Layout::VBox, type: :popup_menu
-      @popup_menu = popup_menu
+      super popup_menu, type: :popup_menu
     end
-    attr_reader :popup_menu
 
     def shown
+      super
       follow_cursor
       grab_pointer
-      set_tracking @popup_menu
-      add_child @popup_menu, resize: [true, true]
-      size = popup_menu.resize_to_preferred
-      resize_to size.width, size.height
+      set_tracking menu
     end
 
     def hidden
