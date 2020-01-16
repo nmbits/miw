@@ -6,9 +6,11 @@ require 'pp'
 
 module MiW
   class PopupMenu < Menu
-    def show
-      super
-      PopupMenuWindow.new(self).show unless attached?
+    def go(x, y)
+      show
+      unless attached?
+        PopupMenuWindow.new(self, x, y).show unless attached?
+      end
     end
 
     def hide
