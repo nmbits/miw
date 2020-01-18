@@ -11,7 +11,7 @@ module MiW
       super name, font: font, layout: layout, **opts
       @items = []
     end
-    attr_reader :items, :master
+    attr_reader :items, :master, :highlight
 
     def attached_to_window
       pango_layout.font_description = font
@@ -55,6 +55,22 @@ module MiW
       @items.each_with_index { |item, i| item.draw }
     end
 
+    def mouse_down(x, y, button, state, count)
+      redirect_mouse(:mouse_down, x, y, button, state, count) ||
+        mouse_down_impl(x, y, button)
+    end
+
+    def mouse_down_impl(x, y, button)
+      if button == 1 && !@master
+        item = item_at(x, y)
+        if item && item.enable?
+          start_menuing
+          open_submenu(item) if item.submenu
+        end
+      end
+    end
+    private :mouse_down_impl
+
     def mouse_moved(x, y, *_)
       redirect_mouse(:mouse_moved, x, y, *_) ||
         mouse_moved_impl(x, y)
@@ -62,21 +78,11 @@ module MiW
 
     def mouse_moved_impl(x, y)
       prev = @highlight
-      @highlight = nil
-      @items.each do |item|
-        next unless item.enable?
-        if item.frame.contain? x, y
-          @highlight = item
-          break
-        end
-      end
+      @highlight = @items.find { |item| item.enable? && item.frame.contain?(x, y) }
       if prev != @highlight
-        prev.highlight = false if prev
-        if @highlight
-          @highlight.highlight = true
-          if @active_submenu
-            activate_submenu_item @highlight if @highlight.submenu
-          end
+        if @master
+          prev.submenu.close if prev && prev.submenu
+          open_submenu(@highlight) if @highlight && @highlight.submenu
         end
         invalidate
       end
@@ -84,8 +90,8 @@ module MiW
     private :mouse_moved_impl
 
     def mouse_up(x, y, button, state)
-      p :mouse_up
-      p [x, y, button, state]
+      # p :mouse_up
+      # p [x, y, button, state]
       redirect_mouse(:mouse_up, x, y, button, state) ||
         mouse_up_impl(x, y, button, state)
     end
@@ -98,37 +104,26 @@ module MiW
         end
       end
     end
-    private :mouse_moved_impl
+    private :mouse_up_impl
 
-    def mouse_down(x, y, button, state, count)
-      redirect_mouse(:mouse_down, x, y, button, state, count) ||
-        mouse_down_impl(x, y, button, state, count)
+    def start_menuing
+      @master = self
+      window.set_tracking self
+      window.grab_pointer
     end
 
-    def mouse_down_impl(x, y, button, state, count)
-      if button == 1
-        item = item_at(x, y)
-        if item && item.enable? && item.submenu
-          if @master.nil?
-            @master = self
-            window.set_tracking self
-            window.grab_pointer
-          end
-          activate_submenu_item item
-        end
-      end
+    def end_menuing
+      close_submenu
+      @master = nil
+      window.set_tracking nil
+      window.ungrab_pointer
     end
-    private :mouse_down_impl
 
-    def activate_submenu_item(item)
-      if @active_submenu && @active_submenu != item.submenu
-        @active_submenu.close
-      end
-      @active_submenu = item.submenu
+    def open_submenu(item)
       pos = submenu_pos item
-      @active_submenu.open pos.x, pos.y, @master
+      item.submenu.open pos.x, pos.y, @master
     end
-    private :activate_submenu_item
+    private :open_submenu
 
     def item_at(x, y)
       @items.find { |item| item.frame.contain? x, y }
@@ -137,11 +132,10 @@ module MiW
     protected
 
     def item_selected(item)
-      @active_submenu.close
+      end_menuing
+      @highlight = nil
+      invalidate
       p item.label
-      @master = nil
-      window.set_tracking nil
-      window.ungrab_pointer
     end
 
     def calculate_preferred_size
@@ -179,9 +173,13 @@ module MiW
       MenuWindow.new(self, x, y, :dropdown_menu).show unless attached?
     end
 
+    def close_submenu
+      @highlight.submenu.close if @highlight && @highlight.submenu
+    end
+
     def close
-      @active_submenu.close if @acitve_submenu
-      @active_submenu = nil
+      close_submenu
+      @highlight = nil
       @master = nil
       if attached?
         window.hide
@@ -190,14 +188,15 @@ module MiW
     end
 
     def find_submenu(sx, sy)
-      if @active_submenu
-        @active_submenu.find_submenu(sx, sy) ||
-          @active_submenu.hit_and_self(sx, sy)
+      item = @highlight
+      if item && item.submenu
+        item.submenu.find_submenu(sx, sy) ||
+          item.submenu.hit_and_self(sx, sy)
       end
     end
 
     def hit_and_self(sx, sy)
-      if window.hit? sx, sy
+      if window && window.hit?(sx, sy)
         return self if frame.contain? *window.convert_from_screen(sx, sy)
       end
       nil
@@ -215,8 +214,6 @@ module MiW
     end
 
     def redirect_mouse(sym, x, y, *a)
-      p :redirect_mouse
-      p [sym, x, y, *a]
       if @master == self
         sx, sy = convert_to_screen x, y
         submenu = find_submenu sx, sy

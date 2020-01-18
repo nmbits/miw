@@ -367,7 +367,7 @@ module MiW
       raise "The view is a member of another view" if @parent && parent
       if @parent || parent
         @parent = parent
-        set_window @parent.window if parent
+        set_window(parent ? parent.window : nil)
       end
     end
 

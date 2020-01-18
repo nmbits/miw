@@ -13,13 +13,12 @@ module MiW
       @icon = icon
       @type = type
       @frame = Rectangle.new 0, 0, 1, 1
-      @highlight = false
       @enable = true
       @appearance = :long
       @submenu = submenu
     end
     attr_reader :label, :frame, :shortcut, :accel_key, :icon, :type, :submenu
-    attr_accessor :menu, :highlight, :appearance
+    attr_accessor :menu, :appearance
 
     def enable=(v = true)
       @enable = v ? true : false
@@ -33,12 +32,16 @@ module MiW
       @enable ? true : false
     end
 
+    def highlight?
+      menu && menu.highlight == self
+    end
+
     def draw
       cairo = menu.cairo
       cs = MiW.colors
       if enable?
-        bgcolor = highlight ? cs[:control_background_highlight] : cs[:control_background]
-        fgcolor = highlight ? cs[:control_forground_highlight] : cs[:control_forground]
+        bgcolor = highlight? ? cs[:control_background_highlight] : cs[:control_background]
+        fgcolor = highlight? ? cs[:control_forground_highlight] : cs[:control_forground]
       else
         bgcolor = cs[:control_background]
         fgcolor = cs[:control_forground_disabled]
