@@ -32,15 +32,38 @@ if __FILE__ == $0
       popup.add_item "Save as ..."
       popup.add_separator_item
       popup.add_item "閉じる"
-      popup.show
+      x, y = MiW.get_mouse
+      popup.go x, y
     end
   end
 
   m = MiW::MenuBar.new "menu_bar"
-  m.add_item MiW::MenuItem.new("File")
-  m.add_item MiW::MenuItem.new("Edit")
+
+  file_menu = MiW::Menu.new "file_menu"
+  file_menu.add_item "Open ..."
+  file_menu.add_item "Save ..."
+  file_menu.add_item "Save as ..."
+  file_menu.add_separator_item
+
+  2.times do |j|
+    submenu = MiW::Menu.new "submenu 1"
+    10.times do |i|
+      submenu.add_item "item #{j}-#{i}"
+    end
+    file_menu.add_submenu "submenu #{j}", submenu
+  end
+
+  file_menu.add_item "fuga"
+
+  edit_menu = MiW::Menu.new "edit"
+  edit_menu.add_item "Cut"
+  edit_menu.add_item "Copy"
+  edit_menu.add_item "Paste"
+
+  m.add_item MiW::MenuItem.new "File", submenu: file_menu
+  m.add_item MiW::MenuItem.new "Edit", submenu: edit_menu
   m.add_separator_item
-  m.add_item MiW::MenuItem.new("hoge")
+  m.add_item MiW::MenuItem.new "hoge"
   w.add_child m, resize: [true, false]
   m.show
 

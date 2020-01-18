@@ -124,6 +124,14 @@ module MiW
       @root.add_child view, hint
     end
 
+    def hit?(screen_x, screen_y)
+      frame = self.frame
+      (screen_x >= frame[0] &&
+       screen_y >= frame[1] &&
+       screen_x <  frame[0] + frame[2] &&
+       screen_y <  frame[1] + frame[3])
+    end
+
     private
 
     def draw_recursive(view, rect)

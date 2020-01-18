@@ -190,6 +190,30 @@ module MiW
       end
     end
 
+    def convert_to_screen(a1, a2 = nil)
+      if window
+        if a2
+          window.convert_to_screen *convert_to_window(a1, a2)
+        else
+          window.convert_to_screen convert_to_window(a1)
+        end
+      else
+        raise "not attached"
+      end
+    end
+
+    def convert_from_screen(a1, a2 = nil)
+      if window
+        if a2
+          convert_from_window *window.convert_from_screen(a1, a2)
+        else
+          convert_from_window window.convert_from_screen(a1)
+        end
+      else
+        raise "not attached"
+      end
+    end
+
     def invalidate(rect = self.bounds)
       ax, ay = convert_to_window rect.x, rect.y
       @window.invalidate ax, ay, rect.width, rect.height
@@ -343,7 +367,7 @@ module MiW
       raise "The view is a member of another view" if @parent && parent
       if @parent || parent
         @parent = parent
-        set_window @parent.window
+        set_window @parent.window if parent
       end
     end
 

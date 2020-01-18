@@ -37,5 +37,9 @@ module MiW
     def item_layout_hint
       {resize: [false, true]}
     end
+
+    def submenu_pos(item)
+      convert_to_screen item.frame.left_bottom
+    end
   end
 end

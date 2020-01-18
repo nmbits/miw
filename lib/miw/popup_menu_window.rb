@@ -5,7 +5,7 @@ require 'miw/layout/box'
 module MiW
   class PopupMenuWindow < MenuWindow
     def initialize(popup_menu, x, y)
-      super popup_menu, x, y, type: :popup_menu
+      super popup_menu, x, y, :popup_menu
     end
 
     def shown

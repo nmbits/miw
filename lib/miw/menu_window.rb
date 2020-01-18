@@ -3,7 +3,7 @@ require 'miw/window'
 
 module MiW
   class MenuWindow < Window
-    def initialize(menu, x, y, type: nil)
+    def initialize(menu, x, y, type)
       name = "__window__#{menu.name}"
       super name, x, y, 1, 1, layout: Layout::VBox, type: type
       @menu = menu

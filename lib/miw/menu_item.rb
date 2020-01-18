@@ -6,7 +6,7 @@ module MiW
   class MenuItem
     EXTENT_RATIO = 1.4 # pseudo
     MARGINE = 20 # pseudo
-    def initialize(label, shortcut: nil, accel_key: nil, icon: nil, type: :default)
+    def initialize(label, shortcut: nil, accel_key: nil, icon: nil, submenu: nil, type: :default)
       @label = label
       @shortcut = shortcut
       @accel_key = accel_key
@@ -16,8 +16,9 @@ module MiW
       @highlight = false
       @enable = true
       @appearance = :long
+      @submenu = submenu
     end
-    attr_reader :label, :frame, :shortcut, :accel_key, :icon, :type
+    attr_reader :label, :frame, :shortcut, :accel_key, :icon, :type, :submenu
     attr_accessor :menu, :highlight, :appearance
 
     def enable=(v = true)

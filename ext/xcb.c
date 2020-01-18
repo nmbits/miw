@@ -1019,8 +1019,7 @@ miw_xcb_s_process_event(VALUE m_xcb)
 	xcb_generic_event_t *event;
 	xcb_connection_t *c = miw_xcb_connection();
 
-	event = xcb_poll_for_event(c);
-	if (event)
+	while (event = xcb_poll_for_event(c))
 		miw_xcb_process_single_event(event, c);
 
 	return Qnil;
