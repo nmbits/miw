@@ -78,12 +78,16 @@ module MiW
 
     def mouse_moved_impl(x, y)
       prev = @highlight
-      @highlight = @items.find { |item| item.enable? && item.frame.contain?(x, y) }
-      if prev != @highlight
+      item = @items.find { |item| item.enable? && item.frame.contain?(x, y) }
+      if prev != item
         if @master
-          prev.submenu.close if prev && prev.submenu
-          open_submenu(@highlight) if @highlight && @highlight.submenu
+          if item&.submenu
+            open_submenu(item)
+          elsif item
+            close_submenu
+          end
         end
+        @highlight = item if item
         invalidate
       end
     end
@@ -97,10 +101,12 @@ module MiW
     end
 
     def mouse_up_impl(x, y, button, state)
-      if @master && button == 1
+      if button == 1
         item = item_at x, y
-        if item && item.enable? && item.submenu.nil?
-          @master.item_selected item
+        if item && item.enable?
+          if item.submenu.nil?
+            @master.item_selected item
+          end
         end
       end
     end
@@ -115,6 +121,7 @@ module MiW
     def end_menuing
       close_submenu
       @master = nil
+      @active_submenu_item = nil
       window.set_tracking nil
       window.ungrab_pointer
     end
@@ -122,6 +129,18 @@ module MiW
     def open_submenu(item)
       pos = submenu_pos item
       item.submenu.open pos.x, pos.y, @master
+    end
+    private :open_submenu
+
+    def open_submenu(item)
+      if @active_submenu_item != item
+        close_submenu
+        if item
+          pos = submenu_pos item
+          item.submenu.open pos.x, pos.y, @master
+          @active_submenu_item = item
+        end
+      end
     end
     private :open_submenu
 
@@ -174,7 +193,8 @@ module MiW
     end
 
     def close_submenu
-      @highlight.submenu.close if @highlight && @highlight.submenu
+      @active_submenu_item.submenu.close if @active_submenu_item&.submenu
+      @active_submenu_item = nil
     end
 
     def close
@@ -188,15 +208,15 @@ module MiW
     end
 
     def find_submenu(sx, sy)
-      item = @highlight
-      if item && item.submenu
+      item = @active_submenu_item
+      if item&.submenu
         item.submenu.find_submenu(sx, sy) ||
           item.submenu.hit_and_self(sx, sy)
       end
     end
 
     def hit_and_self(sx, sy)
-      if window && window.hit?(sx, sy)
+      if window&.hit?(sx, sy)
         return self if frame.contain? *window.convert_from_screen(sx, sy)
       end
       nil
