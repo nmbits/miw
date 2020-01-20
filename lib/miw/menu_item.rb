@@ -61,6 +61,14 @@ module MiW
       y = @frame.y + (@frame.height * (1.0 - 1 / EXTENT_RATIO) / 2).to_i
       cairo.move_to x, y
       cairo.show_pango_layout panl
+      if submenu && @appearance == :long
+        x = @frame.right - (MARGINE / 2 + @frame.height * 0.25).to_i
+        y = @frame.top + @frame.height * 0.25
+        cairo.triangle x,                        y,
+                       x,                        y + @frame.height * 0.5,
+                       x + @frame.height * 0.25, y + @frame.height * 0.25
+        cairo.fill
+      end
     end
 
     def resize_to_preferred
@@ -76,6 +84,9 @@ module MiW
         end
         w += MARGINE #pseudo
         h = (h * EXTENT_RATIO).ceil
+        if submenu && @appearance == :long
+          w += (MARGINE * 1.5 + h * 0.25).ceil
+        end
         frame.resize_to w, h
       end
     end
