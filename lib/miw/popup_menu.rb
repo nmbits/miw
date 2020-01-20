@@ -17,6 +17,11 @@ module MiW
       window.hide if attached?
     end
 
+    def end_menuing
+      super
+      hide
+    end
+
     def item_selected item
       hide
       super

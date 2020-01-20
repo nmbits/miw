@@ -64,8 +64,10 @@ module MiW
       if button == 1 && !@master
         item = item_at(x, y)
         if item && item.enable?
+          @highlight = item
           start_menuing
           open_submenu(item) if item.submenu
+          invalidate
         end
       end
     end
@@ -86,9 +88,9 @@ module MiW
           elsif item
             close_submenu
           end
+          @highlight = item if item
+          invalidate
         end
-        @highlight = item if item
-        invalidate
       end
     end
     private :mouse_moved_impl
@@ -103,10 +105,12 @@ module MiW
     def mouse_up_impl(x, y, button, state)
       if button == 1
         item = item_at x, y
-        if item && item.enable?
-          if item.submenu.nil?
+        if item
+          if item.enable? && item.submenu.nil?
             @master.item_selected item
           end
+        else
+          end_menuing
         end
       end
     end
@@ -122,8 +126,10 @@ module MiW
       close_submenu
       @master = nil
       @active_submenu_item = nil
+      @highlight = nil
       window.set_tracking nil
       window.ungrab_pointer
+      invalidate
     end
 
     def open_submenu(item)
