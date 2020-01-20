@@ -133,12 +133,6 @@ module MiW
     end
 
     def open_submenu(item)
-      pos = submenu_pos item
-      item.submenu.open pos.x, pos.y, @master
-    end
-    private :open_submenu
-
-    def open_submenu(item)
       if @active_submenu_item != item
         close_submenu
         if item
