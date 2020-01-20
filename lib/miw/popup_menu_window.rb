@@ -10,13 +10,7 @@ module MiW
 
     def shown
       super
-      grab_pointer
-      set_tracking menu
-    end
-
-    def hidden
-      set_tracking nil
-      ungrab_pointer
+      menu.start_menuing
     end
   end
 end

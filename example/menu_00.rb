@@ -32,6 +32,15 @@ if __FILE__ == $0
       popup.add_item "Save as ..."
       popup.add_separator_item
       popup.add_item "閉じる"
+
+      2.times do |j|
+        submenu = MiW::Menu.new "submenu 1"
+        10.times do |i|
+          submenu.add_item "item #{j}-#{i}"
+        end
+        popup.add_submenu "submenu #{j}", submenu
+      end
+
       x, y = MiW.get_mouse
       popup.go x, y
     end

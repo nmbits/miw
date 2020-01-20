@@ -17,9 +17,9 @@ module MiW
       window.hide if attached?
     end
 
-    def mouse_up(x, y, button, state)
+    def item_selected item
+      hide
       super
-      hide if button == 1
     end
   end
 end
