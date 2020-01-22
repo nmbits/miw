@@ -73,6 +73,52 @@ module MiW
       cairo.rectangle rect.x, rect.y, rect.width, rect.height
       cairo.set_source_color cs[:control_background]
       cairo.fill
+      cairo.save do
+        cairo.rectangle rect.x, rect.y, rect.width, rect.height
+        cairo.clip
+        draw_knob
+      end
     end
+
+    def draw_knob
+      cs = MiW.colors
+      cairo.set_source_color cs[:control_forground]
+      each_gap do |rect|
+        if @orientation == :vertical
+          dx = GAP_WIDTH * 0.7
+          dy = 0
+        else
+          dx = 0
+          dy = GAP_WIDTH * 0.7
+        end
+        cx = rect.x + rect.width / 2
+        cy = rect.y + rect.height / 2
+        3.times do |i|
+          cairo.circle cx + (i - 1) * dx, cy + (i - 1) * dy, GAP_WIDTH * 0.1
+          cairo.fill
+        end
+      end
+    end
+    private :draw_knob
+
+    def each_gap
+      if block_given?
+        each_visible_child.each_cons(2) do |a, b|
+          if @orientation == :vertical
+            y = a.frame.bottom
+            h = b.frame.top - y
+            rect = Rectangle.new 0, y, width, h
+          else
+            x = a.frame.right
+            w = b.frame.left - x
+            rect = Rectangle.new x, 0, w, height
+          end
+          yield rect
+        end
+      else
+        self.to_enum __callee__
+      end
+    end
+    private :each_gap
   end
 end
