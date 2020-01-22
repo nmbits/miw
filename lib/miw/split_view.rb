@@ -64,12 +64,13 @@ module MiW
         window.set_tracking nil
         window.ungrab_pointer
         @targets = nil
+        invalidate
       end
     end
 
     def draw(rect)
       cs = MiW.colors
-      cairo.rectangle 0, 0, width, height
+      cairo.rectangle rect.x, rect.y, rect.width, rect.height
       cairo.set_source_color cs[:control_background]
       cairo.fill
     end
