@@ -8,9 +8,10 @@ module MiW
   class View
 
     attr_reader :parent, :window, :name, :layout
-    attr_accessor :font
+    attr_accessor :font, :min_size
 
     DEFAULT_SIZE = Size.new 50, 50
+    ZERO_SIZE = Size.new 0, 0
 
     def initialize(name, layout: nil, font: nil, size: nil, **opts)
       @options = opts
@@ -26,6 +27,7 @@ module MiW
       end
       @observers = Set.new
       @font = font || MiW.fonts[:document]
+      @min_size = ZERO_SIZE
     end
 
     # geometry
@@ -252,22 +254,27 @@ module MiW
     end
 
     def resize_to(a1, a2 = nil)
+      min = min_size
       if a2
-        if a1 < 0 || a2 < 0
-          raise ArgumentError, "size should be greater than or equal to 0"
-        end
-        @frame.resize_to a1, a2
+        # if a1 < 0 || a2 < 0
+        #   raise ArgumentError, "size should be greater than or equal to 0"
+        # end
+        w = [a1, 0, min.width].max
+        h = [a2, 0, min.height].max
+        @frame.resize_to w, h
       else
-        if a1.width < 0 || a1.height < 0
-          raise ArgumentError, "size should be greater than or equal to 0"
-        end
-        @frame.resize_to a1.width, a1.height
+        # if a1.width < 0 || a1.height < 0
+        #   raise ArgumentError, "size should be greater than or equal to 0"
+        # end
+        w = [a1.width, 0, min.width].max
+        h = [a1.height, 0, min.height].max
+        @frame.resize_to w, h
       end
       do_layout if @window
       frame_resized @frame.width, @frame.height
       @frame.size
     end
-    
+
     def preferred_size
       size
     end
