@@ -8,10 +8,11 @@ module MiW
   class View
 
     attr_reader :parent, :window, :name, :layout
-    attr_accessor :font, :min_size
+    attr_accessor :font, :min_size, :max_size
 
-    DEFAULT_SIZE = Size.new 50, 50
-    ZERO_SIZE = Size.new 0, 0
+    DEFAULT_SIZE = Size.new(50, 50).freeze
+    ZERO_SIZE = Size.new(0, 0).freeze
+    INFINITE_SIZE = Size.new(Float::INFINITY, Float::INFINITY).freeze
 
     def initialize(name, layout: nil, font: nil, size: nil, **opts)
       @options = opts
@@ -28,6 +29,7 @@ module MiW
       @observers = Set.new
       @font = font || MiW.fonts[:document]
       @min_size = ZERO_SIZE
+      @max_size = INFINITE_SIZE
     end
 
     # geometry

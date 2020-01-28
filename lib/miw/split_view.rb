@@ -3,10 +3,74 @@ require 'miw'
 require 'miw/view'
 require 'miw/layout/box'
 require 'miw/point'
+require 'miw/util/axis'
 
 module MiW
   class SplitView < View
+    class Resizer
+      def initialize(split_view, index)
+        @view = split_view
+        @index = index
+        @orientation = @view.orientation
+        @axis = Util::Axis.new @orientation
+        @co = 0   # carry over
+      end
+
+      def setup(delta)
+        enum_left = Enumerator.new do |y|
+          (0...@index).reverse_each do |i|
+            y << @view.child_at(i)
+          end
+        end
+        enum_right = Enumerator.new do |y|
+          (@index...@view.count_children).each do |i|
+            y << @view.child_at(i)
+          end
+        end
+        delta < 0 ? [enum_right, enum_left] : [enum_left, enum_right]
+      end
+
+      def do_resize(delta)
+        enum_bigger, enum_smaller = setup delta
+        d = @co + delta
+        if @co != 0
+          if (d < 0) == (@co < 0)
+            @co = d
+            return
+          end
+          @co = 0
+        end
+        bigger_px = enum_bigger.inject(0) do |memo, v|
+          memo + @axis.max_size(v) - @axis.size(v)
+        end
+        smaller_px = enum_smaller.inject(0) do |memo, v|
+          memo + @axis.size(v) - @axis.min_size(v)
+        end
+        d_abs = [bigger_px, smaller_px, d.abs].min
+        if d_abs < d.abs
+          @co = (delta.abs - d_abs) * (delta <=> 0)
+        end
+        tmp = d_abs
+        enum_bigger.each do |v|
+          sz = @axis.max_size(v) - @axis.size(v)
+          ds = [sz, tmp].min
+          @axis.resize_by(v, ds)
+          tmp -= ds
+          break if tmp == 0
+        end
+        tmp = d_abs
+        enum_smaller.each do |v|
+          sz = @axis.size(v) - @axis.min_size(v)
+          ds = [sz, tmp].min
+          @axis.resize_by(v, -ds)
+          tmp -= ds
+          break if tmp == 0
+        end
+      end
+    end
+
     GAP_WIDTH = 10 # pseudo
+
     def initialize(name, orientation: :horizontal, layout: nil, **opts)
       case orientation
       when :vertical
@@ -20,19 +84,13 @@ module MiW
       super name, layout: layout, **opts
       @orientation = orientation
     end
-
-    def find_targets(x, y)
-      each_visible_child.each_cons(2).find do |a, b|
-        @orientation == :vertical ?
-          (a.frame.bottom < y && y < b.frame.top) :
-          (a.frame.right < x && x < b.frame.left)
-      end
-    end
+    attr_reader :orientation
 
     def mouse_down(x, y, button, state, count)
       if count_children > 1 && button == 1
-        @targets = find_targets(x, y)
-        if @targets
+        index = find_index x, y
+        if index && index > 0
+          @resizer = Resizer.new self, index
           @mouse_pos = Point.new x, y
           window.set_tracking self
           window.grab_pointer
@@ -40,22 +98,25 @@ module MiW
       end
     end
 
+    def find_index(x, y)
+      _, index = each_visible_child.each_with_index.find do |c, i|
+        f = c.frame
+        @orientation == :vertical ? (y < f.top) : (x < f.left)
+      end
+      index
+    end
+
+    def get_delta(x, y)
+      answer = @orientation == :vertical ? y - @mouse_pos.y : x - @mouse_pos.x
+      @mouse_pos.x = x
+      @mouse_pos.y = y
+      answer
+    end
+
     def mouse_moved(x, y, transit, state)
-      if @targets
-        if @orientation == :vertical
-          delta = y - @mouse_pos.y
-          @targets[0].resize_by 0, delta
-          @targets[1].offset_by 0, delta
-          @targets[1].resize_by 0, -delta
-        else
-          delta = x - @mouse_pos.x
-          @targets[0].resize_by delta, 0
-          @targets[1].offset_by delta, 0
-          @targets[1].resize_by -delta, 0
-        end
-        @mouse_pos.x = x
-        @mouse_pos.y = y
-        invalidate
+      if @resizer
+        @resizer.do_resize get_delta(x, y)
+        do_layout
       end
     end
 
@@ -63,7 +124,7 @@ module MiW
       if button == 1
         window.set_tracking nil
         window.ungrab_pointer
-        @targets = nil
+        @resizer = nil
         invalidate
       end
     end
