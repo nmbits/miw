@@ -58,7 +58,7 @@ module MiW
     end
 
     def min_size=(sz)
-      @layout_hints[:min_size] = [sz.width, sz.height]
+      @layout_hints[:min_size] = [sz.width, sz.height].freeze
     end
 
     def max_size
@@ -66,7 +66,7 @@ module MiW
     end
 
     def max_size=(sz)
-      @layout_hints[:max_size] = [sz.width, sz.height]
+      @layout_hints[:max_size] = [sz.width, sz.height].freeze
     end
 
     # drawing
