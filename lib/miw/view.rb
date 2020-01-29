@@ -8,7 +8,7 @@ module MiW
   class View
 
     attr_reader :parent, :window, :name, :layout
-    attr_accessor :font, :min_size, :max_size
+    attr_accessor :font, :min_size, :max_size, :layout_hints
 
     DEFAULT_SIZE = Size.new(50, 50).freeze
     ZERO_SIZE = Size.new(0, 0).freeze
@@ -30,6 +30,7 @@ module MiW
       @font = font || MiW.fonts[:document]
       @min_size = ZERO_SIZE
       @max_size = INFINITE_SIZE
+      @layout_hints = {}
     end
 
     # geometry
@@ -107,20 +108,21 @@ module MiW
 
     # tree
 
-    def add_child(child, hint = {})
+    def add_child(child, hints = {})
       if child.parent
         raise "The view is already a member of another view"
       end
-      @children << [child, hint]
+      child.layout_hints = hints
+      @children << child
       child.set_parent self
       do_layout if child.visible? && @window
     end
 
     def remove_child(child)
       unless child.parent == self
-        raise "not a child of this view"
+        raise "not a member of this view"
       end
-      @children.delete_if { |elem| elem.first == child }
+      @children.delete(child)
       child.set_parent nil
       do_layout if child.visible? && @windos
     end
@@ -130,23 +132,12 @@ module MiW
     end
 
     def child_at(i)
-      @children[i] && @children[i].first
+      @children[i]
     end
 
     def remove_self
       @parent.remove_child self if @parent
     end
-
-    # def find_view(name)
-    #   return self if @name == name
-    #   answer = @children.each do |c|
-    #     found = c.find_view(name)
-    #     break found if found
-    #   end
-    #   answer
-    # end
-
-    # window
 
     def attached?
       return (@window ? true : false)
@@ -246,7 +237,7 @@ module MiW
         @layout.do_layout self.each_visible_child_with_hint, self.bounds
       end
     end
-    
+
     def resize_by(a1, a2 = nil)
       if a2
         resize_to(a1 + width, a2 + height)
@@ -312,26 +303,26 @@ module MiW
     end
 
     def each_child
-      return @children.each unless block_given?
-      @children.each do |elem|
-        yield elem.first
+      if block_given?
+        @children.each { |c| yield c }
+      else
+        self.to_enum __callee__
       end
     end
 
     def each_visible_child
-      return self.to_enum(:each_visible_child) unless block_given?
-      @children.each do |elem|
-        c = elem.first
-        next unless c.visible?
-        yield c
+      if block_given?
+        @children.each { |c| yield c if c.visible? }
+      else
+        self.to_enum __callee__
       end
     end
 
     def each_visible_child_with_hint
-      return self.to_enum(:each_visible_child_with_hint) unless block_given?
-      @children.each do |c, hint|
-        next unless c.visible?
-        yield c, hint
+      if block_given?
+        @children.each { |c| yield c, c.layout_hints if c.visible? }
+      else
+        self.to_enum __callee__
       end
     end
 
