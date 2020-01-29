@@ -8,11 +8,11 @@ module MiW
   class View
 
     attr_reader :parent, :window, :name, :layout
-    attr_accessor :font, :min_size, :max_size, :layout_hints
+    attr_accessor :font, :layout_hints
 
     DEFAULT_SIZE = Size.new(50, 50).freeze
-    ZERO_SIZE = Size.new(0, 0).freeze
-    INFINITE_SIZE = Size.new(Float::INFINITY, Float::INFINITY).freeze
+    ZERO_SIZE = [0, 0].freeze
+    INFINITE_SIZE = [Float::INFINITY, Float::INFINITY].freeze
 
     def initialize(name, layout: nil, font: nil, size: nil, **opts)
       @options = opts
@@ -28,9 +28,7 @@ module MiW
       end
       @observers = Set.new
       @font = font || MiW.fonts[:document]
-      @min_size = ZERO_SIZE
-      @max_size = INFINITE_SIZE
-      @layout_hints = {}
+      @layout_hints = { min_size: ZERO_SIZE, max_size: INFINITE_SIZE }
     end
 
     # geometry
@@ -52,6 +50,24 @@ module MiW
     def left_bottom;  @frame.left_bottom  end
     def right_top;    @frame.right_top    end
     def right_bottom; @frame.right_bottom end
+
+    # size
+
+    def min_size
+      Size.new *@layout_hints[:min_size]
+    end
+
+    def min_size=(sz)
+      @layout_hints[:min_size] = [sz.width, sz.height]
+    end
+
+    def max_size
+      Size.new *@layout_hints[:max_size]
+    end
+
+    def max_size=(sz)
+      @layout_hints[:max_size] = [sz.width, sz.height]
+    end
 
     # drawing
     def cairo
@@ -106,13 +122,19 @@ module MiW
     def window_activated(active)
     end
 
+    # layout hints
+    def replace_layout_hints(hints)
+      @layout_hints = @layout_hints.slice :min_size, :max_size
+      @layout_hints.merge! hints
+    end
+
     # tree
 
     def add_child(child, hints = {})
       if child.parent
         raise "The view is already a member of another view"
       end
-      child.layout_hints = hints
+      child.replace_layout_hints hints
       @children << child
       child.set_parent self
       do_layout if child.visible? && @window
