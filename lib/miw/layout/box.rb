@@ -9,20 +9,18 @@ module MiW
       MIN_SIZE_DEFAULT = [0, 0].freeze
       MAX_SIZE_DEFAULT = [Float::INFINITY, Float::INFINITY].freeze
 
-      def initialize(dir = 0)
+      def initialize(dir = 0, spacing = 0)
         @dir = dir
-        @spacing = 0
+        @spacing = spacing
       end
       attr_accessor :spacing
 
-      def do_layout(container, rect, dir = 0)
-        resize_items(container, rect, dir)
-        move_items(container, rect, dir)
+      def do_layout(container, rect)
+        Box.resize_items(container, rect, @dir, @spacing)
+        Box.move_items(container, rect, @dir, @spacing)
       end
 
-      private
-
-      def resize_items(container, rect, dir)
+      def self.resize_items(container, rect, dir, spacing)
         odir = dir ^ 1
         size = [rect.width, rect.height]
         extent = size[dir]
@@ -59,7 +57,7 @@ module MiW
         return if count_items == 0
 
         count_fixed_items = count_items - count_resize_items
-        extent -= @spacing * (count_items - 1)
+        extent -= spacing * (count_items - 1)
 
         # pass 2:
         if count_resize_items > 0
@@ -115,7 +113,7 @@ module MiW
         end
       end
 
-      def move_items(container, rect, dir)
+      def self.move_items(container, rect, dir, spacing)
         odir = dir ^ 1
         pos = [rect.x, rect.y]
         size = [rect.width, rect.height]
@@ -135,20 +133,20 @@ module MiW
             pos[odir] = left_top[odir] + (size[odir] - tmp_size[odir]) / 2
           end
           item.offset_to pos[0], pos[1]
-          pos[dir] += tmp_size[dir] + @spacing
+          pos[dir] += tmp_size[dir] + spacing
         end
       end
     end
 
     class HBox < Box
-      def do_layout(container, frame)
-        super container, frame, 0
+      def initialize(spacing = 0)
+        super 0, spacing
       end
     end
 
     class VBox < Box
-      def do_layout(container, frame)
-        super container, frame, 1
+      def initialize(spacing = 0)
+        super 1, spacing
       end
     end
   end # module Layout

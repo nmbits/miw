@@ -116,7 +116,8 @@ module MiW
     def mouse_moved(x, y, transit, state)
       if @resizer
         @resizer.do_resize get_delta(x, y)
-        do_layout
+        dir = @orientation == :vertical ? 1 : 0
+        Layout::Box.move_items each_visible_child_with_hint, bounds, dir, GAP_WIDTH
       end
     end
 
