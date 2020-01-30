@@ -4,6 +4,11 @@ require "miw/size"
 module MiW
   module Layout
     class Box
+      RESIZE_DEFAULT = [false, false].freeze
+      WEIGHT_DEFAULT = [100, 100].freeze
+      MIN_SIZE_DEFAULT = [0, 0].freeze
+      MAX_SIZE_DEFAULT = [Float::INFINITY, Float::INFINITY].freeze
+
       def initialize(dir = 0)
         @dir = dir
         @spacing = 0
@@ -22,52 +27,91 @@ module MiW
         size = [rect.width, rect.height]
         extent = size[dir]
 
-        pass2_items = []
+        count_resize_items = 0
 
-        num_items = 0
+        count_items = 0
         weight_total = 0
-        
+
         tmp_size = [0, 0]
+
+        # pass 1:
         container.each do |item, hint|
-          num_items += 1
+          count_items += 1
           tmp_size[0] = item.width
           tmp_size[1] = item.height
-          if hint && hint[:resize]
-            resize_dir = hint[:resize][dir]
-            resize_odir = hint[:resize][odir]
+          extent -= tmp_size[dir]
+
+          resize = hint[:resize] || RESIZE_DEFAULT
+          weight = hint[:weight] || WEIGHT_DEFAULT
+          min_size = hint[:min_size] || MIN_SIZE_DEFAULT
+
+          if resize[dir]
+            count_resize_items += 1
           else
-            resize_dir = resize_odir = false
-          end
-          if resize_dir
-            weight = hint && hint[:weight] || 1.0
-            weight = 0.001 if weight <= 0
-            weight_total += weight
-            pass2_items << [item, hint]
-          else
-            extent -= tmp_size[dir]
-          end
-          if !resize_dir
-            tmp_size[odir] = size[odir] if resize_odir
-            item.resize_to tmp_size[0], tmp_size[1]
+            r = tmp_size[dir] - min_size[dir]
+            weight_total += weight[dir]
+            if resize[odir]
+              tmp_size[odir] = size[odir]
+              item.resize_to *tmp_size
+            end
           end
         end
-        return if num_items == 0
+        return if count_items == 0
 
-        extent -= @spacing * (num_items - 1)
-        pass2_items.each do |item, hint|
-          weight = hint && hint[:weight] || 1.0
-          tmp_size[0] = item.width
-          tmp_size[1] = item.height
-          if extent <= 0
-            tmp_size[dir] = 0
-          else
-            ratio = weight.to_f / weight_total
-            tmp_size[dir] = (extent * ratio).round.to_i
+        count_fixed_items = count_items - count_resize_items
+        extent -= @spacing * (count_items - 1)
+
+        # pass 2:
+        if count_resize_items > 0
+          sign = (extent <=> 0)
+
+          recalc = true
+          container.each do |item, hint|
+            resize = hint[:resize] || RESIZE_DEFAULT
+            next unless resize[dir]
+            tmp_size[0] = item.width
+            tmp_size[1] = item.height
+            min_size = hint[:min_size] || MIN_SIZE_DEFAULT
+            max_size = hint[:max_size] || MAX_SIZE_DEFAULT
+            if recalc
+              distr = extent.abs / count_resize_items
+              rem = extent.abs % count_resize_items
+              recalc = false
+            end
+
+            sz = tmp_size[dir] + distr * sign
+            if rem > 0
+              sz += sign
+              rem -= 1
+            end
+            szr = [[sz, min_size[dir]].max, max_size[dir]].min
+            recalc = (szr != sz)
+            extent -= szr - tmp_size[dir]
+
+            tmp_size[dir] = szr
+            tmp_size[odir] = size[odir] if resize[odir]
+            item.resize_to *tmp_size
+            count_resize_items -= 1
           end
-          if hint && hint[:resize] && hint[:resize][odir]
-            tmp_size[odir] = size[odir]
+        end
+
+        # pass 3:
+        if extent < 0
+          container.each do |item, hint|
+            resize = hint[:resize] || RESIZE_DEFAULT
+            next if resize[dir]
+            tmp_size[0] = item.width
+            tmp_size[1] = item.height
+            min_size = hint[:min_size] || MIN_SIZE_DEFAULT
+            w = (hint[:weight] || WEIGHT_DEFAULT)[dir]
+            distr = extent.abs * w / weight_total
+            sz = tmp_size[dir] - distr
+            szr = [sz, min_size[dir]].max
+            tmp_size[dir] = szr
+            extent += szr
+            item.resize_to *tmp_size
+            break unless extent < 0
           end
-          item.resize_to(tmp_size[0], tmp_size[1])
         end
       end
 
