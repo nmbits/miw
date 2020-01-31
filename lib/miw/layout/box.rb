@@ -63,7 +63,9 @@ module MiW
         if count_resize_items > 0
           sign = (extent <=> 0)
 
-          recalc = true
+          recalc = false
+          distr = extent.abs / count_resize_items
+          rem = extent.abs % count_resize_items
           container.each do |item, hint|
             resize = hint[:resize] || RESIZE_DEFAULT
             next unless resize[dir]
