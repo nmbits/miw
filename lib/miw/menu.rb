@@ -16,6 +16,8 @@ module MiW
     def attached_to_window
       pango_layout.font_description = font
       resize_to_preferred
+      self.min_size = size
+      self.max_size = size
     end
 
     def preferred_size
@@ -239,7 +241,6 @@ module MiW
         submenu = find_submenu sx, sy
         if submenu
           vx, vy = submenu.convert_from_screen sx, sy
-          p [submenu.__id__, vx, vy]
           submenu.__send__ sym, vx, vy, *a
           return true
         end
