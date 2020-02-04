@@ -2,11 +2,6 @@
 
 require 'bundler/setup'
 require 'miw'
-require 'miw/window'
-require 'miw/menu'
-require 'miw/menu_item'
-require 'miw/popup_menu'
-require 'miw/menu_bar'
 
 if __FILE__ == $0
 

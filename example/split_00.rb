@@ -1,8 +1,5 @@
 require 'bundler/setup'
 require 'miw'
-require 'miw/window'
-require 'miw/split_view'
-require 'miw/text_view'
 
 if __FILE__ == $0
 
