@@ -1,16 +1,34 @@
 require 'eventmachine'
 require 'cairo'
-require 'miw/theme/colors'
-require 'miw/theme/fonts'
-
-module MiW; end
-
-require 'miw/xcb'
-MiW::PLATFORM = MiW::XCB
-
-require 'miw/window'
 
 module MiW
+  autoload :KeySym,          "miw/keysym"
+  autoload :Layout,          "miw/layout"
+  autoload :Menu,            "miw/menu"
+  autoload :MenuBar,         "miw/menu_bar"
+  autoload :MenuItem,        "miw/menu_item"
+  autoload :MenuWindow,      "miw/menu_window"
+  autoload :Model,           "miw/model"
+  autoload :MouseHandler,    "miw/mouse_handler"
+  autoload :Pointe,          "miw/point"
+  autoload :PopupMenu,       "miw/popup_menu"
+  autoload :PopupMenuWindow, "miw/popup_menu_window"
+  autoload :Rectangle,       "miw/rectangle"
+  autoload :ScrollBar,       "miw/scroll_bar"
+  autoload :ScrollView,      "miw/scroll_view"
+  autoload :SeparatorItem,   "miw/separator_item"
+  autoload :Size,            "miw/size"
+  autoload :SplitView,       "miw/split_view"
+  autoload :StringView,      "miw/string_view"
+  autoload :TextView,        "miw/text_view"
+  autoload :Theme,           "miw/theme"
+  autoload :Util,            "miw/util"
+  autoload :View,            "miw/view"
+  autoload :Window,          "miw/window"
+  autoload :XCB,             "miw/xcb"
+
+  MiW::PLATFORM = MiW::XCB
+
   MOUSE_BUTTON_LEFT   = 1
   MOUSE_BUTTON_CENTER = 2
   MOUSE_BUTTON_RIGHT  = 3

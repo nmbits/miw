@@ -1,6 +1,7 @@
-
 module MiW
   module Layout
-    DEFAULT_SPACING = 0
+    autoload :Box,  "miw/layout/box"
+    autoload :HBox, "miw/layout/box"
+    autoload :VBox, "miw/layout/box"
   end
 end

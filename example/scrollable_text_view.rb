@@ -1,10 +1,6 @@
 # coding: utf-8
 require 'bundler/setup'
 require 'miw'
-require 'miw/window'
-require 'miw/scroll_view'
-require 'miw/text_view'
-require 'miw/layout/box'
 
 if __FILE__ == $0
 
