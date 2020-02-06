@@ -20,6 +20,7 @@ module MiW
   autoload :Size,            "miw/size"
   autoload :SplitView,       "miw/split_view"
   autoload :StringView,      "miw/string_view"
+  autoload :TableView,       "miw/table_view"
   autoload :TextView,        "miw/text_view"
   autoload :Theme,           "miw/theme"
   autoload :Util,            "miw/util"
