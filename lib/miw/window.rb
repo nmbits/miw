@@ -35,7 +35,15 @@ module MiW
     end
 
     def update_if_needed
-      update(0, 0, @width, @height) if @invalid_rect
+      if @invalid_rect && !@update_requested
+        @update_requested = true
+        EM.next_tick do
+          r = @invalid_rect
+          @invalid_rect = nil
+          @update_requested = false
+          update r.x, r.y, r.width, r.height
+        end
+      end
     end
 
     def convert_from_screen(a1, a2 = nil)
@@ -57,15 +65,13 @@ module MiW
     end
 
     def draw(x, y, width, height)
-      rect = Rectangle.new(x, y, width, height)
-      if @invalid_rect
-        rect.intersect @invalid_rect
-        if rect.width > 0 && rect.height > 0
-          @cairo.save{ draw_recursive @root, rect }
-          @invalid_rect = nil
-        end
+      r = Rectangle.new x, y, width, height
+      cairo.save do
+        cairo.translate 0.5, 0.5
+        cairo.line_width = 1.0
+        draw_recursive @root, r
       end
-      sync rect.x, rect.y, rect.width, rect.height
+      sync r.x, r.y, r.width, r.height
     end
 
     def mouse_moved(x, y, transit, data)
@@ -114,7 +120,6 @@ module MiW
           @width = @lazy_size.width
           @height = @lazy_size.height
           @root.resize_to @width, @height
-          invalidate 0, 0, @width, @height
           @lazy_size = nil
         end
       end
@@ -138,15 +143,14 @@ module MiW
       return unless view.visible?
       intr = view.bounds.intersect rect
       return unless intr.valid?
-      @cairo.save{ view.draw intr }
-      view.each_child do |child|
-        next unless child.visible?
+      @cairo.save { view.draw intr }
+      view.each_visible_child do |child|
         @cairo.save do
           @cairo.translate child.x, child.y
           draw_recursive child, child.convert_from_parent(intr)
         end
       end
-      @cairo.save{ view.draw_after_children intr }
+      @cairo.save { view.draw_after_children intr }
     end
   end
 end

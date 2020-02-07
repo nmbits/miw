@@ -255,9 +255,7 @@ module MiW
     end
 
     def do_layout
-      if @layout
-        @layout.do_layout self.each_visible_child_with_hint, self.bounds
-      end
+      @layout&.do_layout self.each_visible_child_with_hint, self.bounds
     end
 
     def resize_by(a1, a2 = nil)
