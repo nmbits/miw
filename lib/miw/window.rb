@@ -17,8 +17,6 @@ module MiW
       @root.set_window self
       @root.resize_to width, height
       @root.show
-      @width = width
-      @height = height
       @invalid_rect = Rectangle.new(0, 0, width, height)
     end
 
@@ -94,17 +92,7 @@ module MiW
     end
 
     def frame_resized(width, height)
-      if @lazy_size
-        @lazy_size.resize_to(width, height)
-      else
-        @lazy_size = Size.new(width, height)
-        EM.add_timer 0.01 do
-          @width = @lazy_size.width
-          @height = @lazy_size.height
-          @root.resize_to @width, @height
-          @lazy_size = nil
-        end
-      end
+      @root.resize_to width, height
     end
 
     def add_child(view, hint = {})
