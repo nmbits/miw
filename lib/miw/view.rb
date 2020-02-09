@@ -212,7 +212,9 @@ module MiW
         if a2
           window.convert_to_screen *convert_to_window(a1, a2)
         else
-          window.convert_to_screen convert_to_window(a1)
+          pos = convert_to_window(a1)
+          x, y = window.convert_to_screen pos.x, pos.y
+          Point.new x, y
         end
       else
         raise "not attached"
@@ -224,7 +226,8 @@ module MiW
         if a2
           convert_from_window *window.convert_from_screen(a1, a2)
         else
-          convert_from_window window.convert_from_screen(a1)
+          x, y = window.convert_from_screen(a1.x, a1.y)
+          convert_from_window Point.new(x, y)
         end
       else
         raise "not attached"
