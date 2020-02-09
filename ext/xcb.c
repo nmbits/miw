@@ -465,22 +465,103 @@ miw_xcb_win_title_get(VALUE self)
 	return Qnil;
 }
 
+typedef struct
+{
+	uint16_t x;
+	uint16_t y;
+	uint16_t width;
+	uint16_t height;
+} miw_geometry_t;
+
+static void
+miw_xcb_win_get_geometry(VALUE win, miw_geometry_t *g)
+{
+	miw_xcb_window_t *w = (miw_xcb_window_t *)DATA_PTR(win);
+	xcb_connection_t *c = miw_xcb_connection();
+	if (w->window) {
+		xcb_get_geometry_reply_t *geom =
+			xcb_get_geometry_reply(c,
+								   xcb_get_geometry(c, w->window),
+								   NULL);
+		g->x      = geom->x;
+		g->y      = geom->y;
+		g->width  = geom->width;
+		g->height = geom->height;
+		free(geom);
+	}
+}
+
+static void
+miw_xcb_win_translate_coordinates(xcb_connection_t *c, xcb_window_t src, xcb_window_t dst,
+								  int16_t x, int16_t y, int16_t *dst_x, int16_t *dst_y)
+{
+	xcb_translate_coordinates_reply_t *reply =
+		xcb_translate_coordinates_reply(c,
+										xcb_translate_coordinates(c, src, dst, x, y),
+										NULL);
+	VALUE ret = rb_ary_new_from_args(2,
+									 INT2NUM(reply->dst_x), INT2NUM(reply->dst_y));
+	*dst_x = reply->dst_x;
+	*dst_y = reply->dst_y;
+	free(reply);
+}
+
+static VALUE
+miw_xcb_win_convert_to_screen(VALUE self, VALUE x_, VALUE y_)
+{
+	miw_xcb_window_t *w = (miw_xcb_window_t *)DATA_PTR(self);
+	xcb_connection_t *c = miw_xcb_connection();
+	if (w->window) {
+		int16_t dst_x;
+		int16_t dst_y;
+		miw_xcb_win_translate_coordinates(c, w->window, miw_xcb_screen(c)->root, 0, 0, &dst_x, &dst_y);
+		return rb_ary_new_from_args(2,
+									INT2NUM(NUM2INT(x_) + dst_x),
+									INT2NUM(NUM2INT(y_) + dst_y));
+	}
+	return Qnil;
+}
+
+static VALUE
+miw_xcb_win_convert_from_screen(VALUE self, VALUE x_, VALUE y_)
+{
+	miw_xcb_window_t *w = (miw_xcb_window_t *)DATA_PTR(self);
+	xcb_connection_t *c = miw_xcb_connection();
+	if (w->window) {
+		int16_t dst_x;
+		int16_t dst_y;
+		miw_xcb_win_translate_coordinates(c, miw_xcb_screen(c)->root, w->window, 0, 0, &dst_x, &dst_y);
+		return rb_ary_new_from_args(2,
+									INT2NUM(NUM2INT(x_) + dst_x),
+									INT2NUM(NUM2INT(y_) + dst_y));
+	}
+	return Qnil;
+}
+
 static VALUE
 miw_xcb_win_pos(VALUE self)
 {
 	miw_xcb_window_t *w = (miw_xcb_window_t *)DATA_PTR(self);
-	VALUE x = INT2FIX(w->x);
-	VALUE y = INT2FIX(w->y);
-	return rb_ary_new_from_args(2, x, y);
+	xcb_connection_t *c = miw_xcb_connection();
+	if (w->window) {
+		miw_geometry_t g = {0, 0, 0, 0};
+		miw_xcb_win_get_geometry(self, &g);
+		return rb_ary_new_from_args(2, INT2NUM(g.x), INT2NUM(g.y));
+	}
+	return Qnil;
 }
 
 static VALUE
 miw_xcb_win_size(VALUE self)
 {
 	miw_xcb_window_t *w = (miw_xcb_window_t *)DATA_PTR(self);
-	VALUE width = INT2FIX(w->width);
-	VALUE height = INT2FIX(w->height);
-	return rb_ary_new_from_args(2, width, height);
+	xcb_connection_t *c = miw_xcb_connection();
+	if (w->window) {
+		miw_geometry_t g = {0, 0, 0, 0};
+		miw_xcb_win_get_geometry(self, &g);
+		return rb_ary_new_from_args(2, INT2NUM(g.width), INT2NUM(g.height));
+	}
+	return Qnil;
 }
 
 static VALUE
@@ -489,15 +570,11 @@ miw_xcb_win_frame(VALUE self)
 	miw_xcb_window_t *w = (miw_xcb_window_t *)DATA_PTR(self);
 	xcb_connection_t *c = miw_xcb_connection();
 	if (w->window) {
-		xcb_get_geometry_reply_t *geom =
-			xcb_get_geometry_reply(c,
-								   xcb_get_geometry(c, w->window),
-								   NULL);
-		VALUE ret = rb_ary_new_from_args(4,
-										 INT2NUM(geom->x), INT2NUM(geom->y),
-										 UINT2NUM(geom->width), UINT2NUM(geom->height));
-		free(geom);
-		return ret;
+		miw_geometry_t g = {0, 0, 0, 0};
+		miw_xcb_win_get_geometry(self, &g);
+		return rb_ary_new_from_args(4,
+									INT2NUM(g.x),     INT2NUM(g.y),
+									INT2NUM(g.width), INT2NUM(g.height));
 	}
 	return Qnil;
 }
@@ -1081,6 +1158,8 @@ miw_xcb_init()
 	rb_define_method(c, "move_to", miw_xcb_win_move_to, 2);
 	rb_define_method(c, "resize_to", miw_xcb_win_resize_to, 2);
 	rb_define_method(c, "get_mouse", miw_xcb_win_get_mouse, 0);
+	rb_define_method(c, "convert_to_screen", miw_xcb_win_convert_to_screen, 2);
+	rb_define_method(c, "convert_from_screen", miw_xcb_win_convert_from_screen, 2);
 
 	DEFAULT_HOOK(draw, 4);
 	DEFAULT_HOOK(mouse_moved, 4);

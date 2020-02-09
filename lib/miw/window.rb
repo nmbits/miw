@@ -46,24 +46,6 @@ module MiW
       end
     end
 
-    def convert_from_screen(a1, a2 = nil)
-      x, y = pos
-      if a2
-        [a1 - x, a2 - y]
-      else
-        a1.dup.offset_by -x, -y
-      end
-    end
-
-    def convert_to_screen(a1, a2 = nil)
-      x, y = pos
-      if a2
-        [a1 + x, a2 + y]
-      else
-        a1.dup.offset_by x, y
-      end
-    end
-
     def draw(x, y, width, height)
       r = Rectangle.new x, y, width, height
       cairo.save do
@@ -71,7 +53,7 @@ module MiW
         cairo.line_width = 1.0
         draw_recursive @root, r
       end
-      sync r.x, r.y, r.width, r.height
+      sync x, y, width, height
     end
 
     def mouse_moved(x, y, transit, data)
