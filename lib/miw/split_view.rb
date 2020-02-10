@@ -126,7 +126,6 @@ module MiW
         window.set_tracking nil
         window.ungrab_pointer
         @resizer = nil
-        invalidate
       end
     end
 

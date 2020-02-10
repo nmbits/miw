@@ -212,7 +212,9 @@ module MiW
         if a2
           window.convert_to_screen *convert_to_window(a1, a2)
         else
-          window.convert_to_screen convert_to_window(a1)
+          pos = convert_to_window(a1)
+          x, y = window.convert_to_screen pos.x, pos.y
+          Point.new x, y
         end
       else
         raise "not attached"
@@ -224,7 +226,8 @@ module MiW
         if a2
           convert_from_window *window.convert_from_screen(a1, a2)
         else
-          convert_from_window window.convert_from_screen(a1)
+          x, y = window.convert_from_screen(a1.x, a1.y)
+          convert_from_window Point.new(x, y)
         end
       else
         raise "not attached"
@@ -255,9 +258,7 @@ module MiW
     end
 
     def do_layout
-      if @layout
-        @layout.do_layout self.each_visible_child_with_hint, self.bounds
-      end
+      @layout&.do_layout self.each_visible_child_with_hint, self.bounds
     end
 
     def resize_by(a1, a2 = nil)
