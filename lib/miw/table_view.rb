@@ -7,7 +7,7 @@ module MiW
     def initialize(name, dataset: nil, **opts)
       super name, **opts
       @dataset = dataset
-      @top_row = 0
+      @offset = 0
       @column_defs = []
     end
     attr_reader :dataset
@@ -26,7 +26,7 @@ module MiW
     end
 
     def view_port
-      Rectangle.new 0, @top_row, 100, @visible_lines
+      Rectangle.new 0, @offset, 100, @visible_lines
     end
 
     def draw(rect)
@@ -40,7 +40,7 @@ module MiW
         cairo.fill
         cairo.set_source_color cs[:control_forground]
 
-        @dataset.offset(@top_row).each do |row|
+        @dataset.offset(@offset).each do |row|
           h = draw_row x, y, row
           y += h
           break if y > rect.y + rect.height
