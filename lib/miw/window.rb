@@ -100,7 +100,8 @@ module MiW
     end
 
     def hit?(screen_x, screen_y)
-      frame = self.frame
+      f = self.frame
+      frame[0], frame[1] = convert_to_screen f[0], f[1]
       (screen_x >= frame[0] &&
        screen_y >= frame[1] &&
        screen_x <  frame[0] + frame[2] &&
