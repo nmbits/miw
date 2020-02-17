@@ -370,18 +370,14 @@ module MiW
         raise "The view is already attached to another window" if window
         @window = nil
         detached_from_window
-        each_child do |c|
-          c.set_window nil
-        end
+        each_child { |c| c.set_window nil }
         all_detached
       else
         if window
           @window = window
           attached_to_window
-          each_child do |c|
-            c.set_window @window
-          end
-          all_detached
+          each_child { |c| c.set_window @window }
+          all_attached
         end
       end
     end
