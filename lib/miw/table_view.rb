@@ -2,15 +2,24 @@ require 'miw'
 
 module MiW
   class TableView < View
+    MARGIN_RATIO = 1.4   # pseudo
     ColumnDef = Struct.new :key, :display_name, :width, :align
-
     def initialize(name, dataset: nil, **opts)
       super name, **opts
       @dataset = dataset
       @offset = 0
       @column_defs = []
+      @row_height = 0
     end
     attr_reader :dataset
+
+    def attached_to_window
+      panl = pango_layout
+      panl.font_description = MiW.fonts[:ui]
+      panl.text = "M"
+      _, h = panl.pixel_size
+      @row_height = (h * MARGIN_RATIO).ceil
+    end
 
     def add_column_def(key, display_name, width = 80, align = :left) # pseudo
       @column_defs << ColumnDef.new(key, display_name, width, align)
