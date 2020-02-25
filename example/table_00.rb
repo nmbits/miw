@@ -26,9 +26,14 @@ if __FILE__ == $0
   end
 
   v = MiW::TableView.new "table", dataset: dataset
-  v.add_column_def :name, "Name"
-  v.add_column_def :active, "Active"
-  v.add_column_def :created_at, "Created At"
+
+  columns = [
+    {key: :name,       display_name: "Name"},
+    {key: :active,     display_name: "Active"},
+    {key: :created_at, display_name: "Created At"}
+  ]
+
+  v.columns = columns
 
   v.show
   w.add_child v, resize: [true, true]

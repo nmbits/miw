@@ -3,12 +3,13 @@ require 'miw'
 module MiW
   class TableView < View
     MARGIN_RATIO = 1.4   # pseudo
-    ColumnDef = Struct.new :key, :display_name, :width, :align
+    DEFAULT_WIDTH = 80
+    DEFAULT_ALIGN = :left
     def initialize(name, dataset: nil, **opts)
       super name, **opts
       @dataset = dataset
       @offset = 0
-      @column_defs = []
+      @columns = []
       @row_height = 0
     end
     attr_reader :dataset
@@ -21,8 +22,8 @@ module MiW
       @row_height = (h * MARGIN_RATIO).ceil
     end
 
-    def add_column_def(key, display_name, width = 80, align = :left) # pseudo
-      @column_defs << ColumnDef.new(key, display_name, width, align)
+    def columns=(cols)
+      @columns = cols
     end
 
     def dataset=(d)
@@ -62,17 +63,20 @@ module MiW
       panl = pango_layout
       panl.font_description = MiW.fonts[:ui]
       max_height = 0
-      @column_defs.each do |coldef|
-        value = raw[coldef.key]
-        panl.text = value.to_s
-        cairo.move_to x, y
-        cairo.show_pango_layout panl
-        w, h = panl.pixel_size
-        x += coldef.width
-        max_height = [h, max_height].max
-        # cairo.move_to x, by
-        # cairo.line_to x, by + max_height
-        # cairo.stroke
+      @columns.each do |col|
+        key = col[:key]
+        if key
+          value = raw[key]
+          panl.text = value.to_s
+          cairo.move_to x, y
+          cairo.show_pango_layout panl
+          w, h = panl.pixel_size
+          x += (col[:width] || DEFAULT_WIDTH)
+          max_height = [h, max_height].max
+          # cairo.move_to x, by
+          # cairo.line_to x, by + max_height
+          # cairo.stroke
+        end
       end
       # cairo.move_to bx, by + max_height
       # cairo.line_to x, by + max_height
