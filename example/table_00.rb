@@ -26,6 +26,7 @@ if __FILE__ == $0
   end
 
   v = MiW::TableView.new "table", dataset: dataset
+  v.show
 
   columns = [
     {key: :name,       display_name: "Name"},
@@ -35,8 +36,11 @@ if __FILE__ == $0
 
   v.columns = columns
 
-  v.show
-  w.add_child v, resize: [true, true]
+  sv = MiW::ScrollView.new "sv", horizontal: false
+  w.add_child sv, resize: [true, true]
+
+  sv.target = v
+  # w.add_child v, resize: [true, true]
   w.show
 
   MiW.run
