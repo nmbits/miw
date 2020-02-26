@@ -380,6 +380,7 @@ module MiW
           all_attached
         end
       end
+      @panl_work_font = nil
     end
 
     def set_parent(parent)
@@ -435,6 +436,20 @@ module MiW
 
     def remove_observer(observer)
       @observers.delete observer
+    end
+
+    # font
+    def font_pixel_height
+      if @window
+        unless @panl_work_font
+          @panl_work_font = @window.cairo.create_pango_layout
+          @panl_work_font.font_description = @font
+          @panl_work_font.text = "M"
+        end
+        @panl_work_font.pixel_size[1]
+      else
+        0
+      end
     end
 
     # mouse
