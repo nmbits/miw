@@ -11,6 +11,7 @@ module MiW
       @offset = 0
       @columns = []
       @row_height = 0
+      @count = 0
       @visible_lines = 20 # pseudo
     end
     attr_reader :dataset
@@ -29,11 +30,12 @@ module MiW
 
     def dataset=(d)
       @dataset = d
+      @count = @dataset.count
     end
 
     def extent
       # pseudo
-      Rectangle.new 0, 0, 100, @dataset.count
+      Rectangle.new 0, 0, 100, @count
     end
 
     def view_port
