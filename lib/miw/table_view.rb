@@ -5,23 +5,13 @@ module MiW
     MARGIN_RATIO = 1.4   # pseudo
     DEFAULT_WIDTH = 80
     DEFAULT_ALIGN = :left
-    def initialize(name, dataset: nil, **opts)
+    def initialize(name, dataset: nil, tree_mode: false, **opts)
       super name, **opts
-      @dataset = dataset
       @offset = 0
       @columns = []
-      @row_height = 0
-      @count = 0
       @visible_lines = 20 # pseudo
-    end
-    attr_reader :dataset
-
-    def attached_to_window
-      panl = pango_layout
-      panl.font_description = MiW.fonts[:ui]
-      panl.text = "M"
-      _, h = panl.pixel_size
-      @row_height = (h * MARGIN_RATIO).ceil
+      @tree_mode = tree_mode
+      @view_model = (tree_mode ? ViewModel::TreeTable : ViewModel::FlatTable).new dataset
     end
 
     def columns=(cols)
@@ -35,16 +25,15 @@ module MiW
 
     def extent
       # pseudo
-      Rectangle.new 0, 0, 100, @count
+      Rectangle.new 0, 0, 100, @view_model.total
     end
 
     def view_port
-      Rectangle.new 0, @offset, 100, 20 # pseudo
-      # Rectangle.new 0, @offset, 100, @visible_lines
+      Rectangle.new 0, @view_model.offset, 100, 20 # pseudo
     end
 
     def scroll_to(x, y)
-      @offset = y
+      @view_model.offset_to y
       invalidate
     end
 
@@ -59,7 +48,7 @@ module MiW
         cairo.fill
         cairo.set_source_color cs[:control_forground]
 
-        @dataset.offset(@offset).each do |row|
+        @view_model.each do |row|
           h = draw_row x, y, row
           y += h
           break if y > rect.y + rect.height
@@ -67,7 +56,7 @@ module MiW
       end
     end
 
-    def draw_row(x, y, raw)
+    def draw_row(x, y, row)
       bx, by = x, y
       panl = pango_layout
       panl.font_description = MiW.fonts[:ui]
@@ -75,7 +64,7 @@ module MiW
       @columns.each do |col|
         key = col[:key]
         if key
-          value = raw[key]
+          value = row.content[key]
           panl.text = value.to_s
           cairo.move_to x, y
           cairo.show_pango_layout panl

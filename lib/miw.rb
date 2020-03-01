@@ -25,6 +25,7 @@ module MiW
   autoload :Theme,           "miw/theme"
   autoload :Util,            "miw/util"
   autoload :View,            "miw/view"
+  autoload :ViewModel,       "miw/view_model"
   autoload :Window,          "miw/window"
   autoload :XCB,             "miw/xcb"
 
