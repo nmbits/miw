@@ -12,6 +12,7 @@ module MiW
       @visible_lines = 20 # pseudo
       @tree_mode = tree_mode
       @view_model = (tree_mode ? ViewModel::TreeTable : ViewModel::FlatTable).new dataset
+      @mod = 0
     end
 
     def columns=(cols)
@@ -24,21 +25,30 @@ module MiW
     end
 
     def extent
-      # pseudo
-      Rectangle.new 0, 0, 100, @view_model.total
+      Rectangle.new 0, 0, 100, @view_model.total * row_height
     end
 
     def view_port
-      Rectangle.new 0, @view_model.offset, 100, 20 # pseudo
+      Rectangle.new 0, @view_model.offset * row_height, 100, height
     end
 
     def scroll_to(x, y)
-      @view_model.offset_to y
-      invalidate
+      if (h = row_height) > 0
+        i = y / h
+        @mod = y % h
+        @view_model.offset_to i
+        invalidate
+      end
+    end
+
+    def row_height
+      (font_pixel_height * MARGIN_RATIO).ceil
     end
 
     def draw(rect)
-      x = y = 0
+      x = 0
+      y = - @mod
+      h = row_height
       cs = MiW.colors
       cairo.save do
         cairo.rectangle rect.x, rect.y, rect.width, rect.height
@@ -49,7 +59,7 @@ module MiW
         cairo.set_source_color cs[:control_forground]
 
         @view_model.each do |row|
-          h = draw_row x, y, row
+          draw_row x, y, row
           y += h
           break if y > rect.y + rect.height
         end
