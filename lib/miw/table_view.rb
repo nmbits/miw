@@ -46,9 +46,7 @@ module MiW
     end
 
     def draw(rect)
-      x = 0
-      y = - @mod
-      h = row_height
+      rect_row = Rectangle.new 0, -@mod, width, row_height
       cs = MiW.colors
       cairo.save do
         cairo.rectangle rect.x, rect.y, rect.width, rect.height
@@ -57,39 +55,46 @@ module MiW
         cairo.set_source_color cs[:control_background]
         cairo.fill
         cairo.set_source_color cs[:control_forground]
+        pango_layout.font_description = MiW.fonts[:ui]
 
         @view_model.each do |row|
-          draw_row x, y, row
-          y += h
-          break if y > rect.y + rect.height
+          draw_row rect_row, row if rect_row.bottom > rect.top
+          rect_row.offset_by 0, rect_row.height
+          break if rect_row.y > rect.bottom
+        end
+
+        cairo.set_source_rgb 0.3, 0.3, 0.3 # pseudo
+        x = 0
+        @columns.each do |col|
+          cairo.move_to x, rect.top
+          cairo.line_to x, rect.bottom
+          cairo.stroke
+          x += (col[:width] || DEFAULT_WIDTH)
         end
       end
     end
 
-    def draw_row(x, y, row)
-      bx, by = x, y
+    def draw_row(rect, row)
+      x = bx = rect.x
+      y = by = rect.y
       panl = pango_layout
-      panl.font_description = MiW.fonts[:ui]
-      max_height = 0
       @columns.each do |col|
         key = col[:key]
         if key
           value = row.content[key]
           panl.text = value.to_s
-          cairo.move_to x, y
+          tw, th = panl.pixel_size
+          cairo.move_to x, y + (rect.height - th) / 2
           cairo.show_pango_layout panl
-          w, h = panl.pixel_size
           x += (col[:width] || DEFAULT_WIDTH)
-          max_height = [h, max_height].max
-          # cairo.move_to x, by
-          # cairo.line_to x, by + max_height
-          # cairo.stroke
         end
       end
-      # cairo.move_to bx, by + max_height
-      # cairo.line_to x, by + max_height
-      # cairo.stroke
-      max_height
+      cairo.save do
+        cairo.set_source_rgb 0.3, 0.3, 0.3 # pseudo
+        cairo.move_to rect.left, rect.bottom
+        cairo.line_to rect.right, rect.bottom
+        cairo.stroke
+      end
     end
   end
 end
