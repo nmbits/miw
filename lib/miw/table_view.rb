@@ -1,4 +1,5 @@
 require 'miw'
+require 'miw/layout/box'
 
 module MiW
   class TableView < View
@@ -15,6 +16,7 @@ module MiW
       @tree_mode = tree_mode
       @mod = 0
       self.dataset = dataset
+      @layout = Layout::HBox.new
     end
 
     def add_column(column)
@@ -46,6 +48,24 @@ module MiW
       (font_pixel_height * MARGIN_RATIO).ceil
     end
 
+    def each_visible_column_with_hint
+      hint = { resize: [true, true], min_size: [0, 0], max_size: [0, 0] }
+      if block_given?
+        @columns.each do |column|
+          hint[:resize][0] = column.resize
+          hint[:min_size][0] = column.min_width
+          hint[:max_size][0] = column.max_width
+          yield column, hint
+        end
+      else
+        self.to_enum __callee__
+      end
+    end
+
+    def do_layout
+      @layout.do_layout each_visible_column_with_hint, self.bounds
+    end
+
     def draw(rect)
       rect_row = Rectangle.new 0, -@mod, width, row_height
       cs = MiW.colors
@@ -63,12 +83,10 @@ module MiW
         end
 
         cairo.set_source_rgb 0.3, 0.3, 0.3 # pseudo
-        x = 0
         @columns.each do |column|
-          cairo.move_to x, rect.top
-          cairo.line_to x, rect.bottom
+          cairo.move_to column.x, rect.top
+          cairo.line_to column.x, rect.bottom
           cairo.stroke
-          x += column.width
         end
       end
     end
@@ -76,9 +94,9 @@ module MiW
     def draw_row(rect, row)
       column_rect = rect.dup
       @columns.each do |column|
+        column_rect.x = column.x
         column_rect.width = column.width
         column.draw_value cairo, column_rect, row[column.key]
-        column_rect.offset_by column.width, 0
       end
       cairo.save do
         cairo.set_source_rgb 0.3, 0.3, 0.3 # pseudo

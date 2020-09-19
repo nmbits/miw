@@ -28,9 +28,9 @@ if __FILE__ == $0
   v = MiW::TableView.new "table", dataset: dataset
   v.show
 
-  v.add_column MiW::TableView::TextColumn.new(:name, "Name")
-  v.add_column MiW::TableView::TextColumn.new(:active, "Active")
-  v.add_column MiW::TableView::TextColumn.new(:created_at, "Created At", 240)
+  v.add_column MiW::TableView::TextColumn.new(:name, "Name", min: 20, max: 150)
+  v.add_column MiW::TableView::TextColumn.new(:active, "Active", min: 30, max: 150, resize: true)
+  v.add_column MiW::TableView::TextColumn.new(:created_at, "Created At", width: 240, min: 30, max: 400, resize: false)
 
   sv = MiW::ScrollView.new "sv", horizontal: false
   w.add_child sv, resize: [true, true]
