@@ -2,6 +2,9 @@ require 'miw'
 
 module MiW
   class TableView < View
+    autoload :DataCache, "miw/table_view/data_cache"
+    autoload :TextColumn, "miw/table_view/text_column"
+
     MARGIN_RATIO = 1.4   # pseudo
     DEFAULT_WIDTH = 80
     DEFAULT_ALIGN = :left
@@ -9,34 +12,32 @@ module MiW
       super name, **opts
       @offset = 0
       @columns = []
-      @visible_lines = 20 # pseudo
       @tree_mode = tree_mode
-      @view_model = (tree_mode ? ViewModel::TreeTable : ViewModel::FlatTable).new dataset
       @mod = 0
+      self.dataset = dataset
     end
 
-    def columns=(cols)
-      @columns = cols
+    def add_column(column)
+      @columns << column
     end
 
-    def dataset=(d)
-      @dataset = d
-      @count = @dataset.count
+    def dataset=(dataset)
+      @data_cache = DataCache.new dataset
     end
 
     def extent
-      Rectangle.new 0, 0, 100, @view_model.total * row_height
+      Rectangle.new 0, 0, 100, @data_cache.count * row_height
     end
 
     def view_port
-      Rectangle.new 0, @view_model.offset * row_height, 100, height
+      Rectangle.new 0, @offset * row_height, 100, height
     end
 
     def scroll_to(x, y)
       if (h = row_height) > 0
         i = y / h
         @mod = y % h
-        @view_model.offset_to i
+        @offset = i
         invalidate
       end
     end
@@ -54,10 +55,8 @@ module MiW
         cairo.rectangle rect.x, rect.y, rect.width, rect.height
         cairo.set_source_color cs[:control_background]
         cairo.fill
-        cairo.set_source_color cs[:control_forground]
-        pango_layout.font_description = MiW.fonts[:ui]
 
-        @view_model.each do |row|
+        @data_cache.each(@offset) do |row|
           draw_row rect_row, row if rect_row.bottom > rect.top
           rect_row.offset_by 0, rect_row.height
           break if rect_row.y > rect.bottom
@@ -65,29 +64,21 @@ module MiW
 
         cairo.set_source_rgb 0.3, 0.3, 0.3 # pseudo
         x = 0
-        @columns.each do |col|
+        @columns.each do |column|
           cairo.move_to x, rect.top
           cairo.line_to x, rect.bottom
           cairo.stroke
-          x += (col[:width] || DEFAULT_WIDTH)
+          x += column.width
         end
       end
     end
 
     def draw_row(rect, row)
-      x = bx = rect.x
-      y = by = rect.y
-      panl = pango_layout
-      @columns.each do |col|
-        key = col[:key]
-        if key
-          value = row.content[key]
-          panl.text = value.to_s
-          tw, th = panl.pixel_size
-          cairo.move_to x, y + (rect.height - th) / 2
-          cairo.show_pango_layout panl
-          x += (col[:width] || DEFAULT_WIDTH)
-        end
+      column_rect = rect.dup
+      @columns.each do |column|
+        column_rect.width = column.width
+        column.draw_value cairo, column_rect, row[column.key]
+        column_rect.offset_by column.width, 0
       end
       cairo.save do
         cairo.set_source_rgb 0.3, 0.3, 0.3 # pseudo

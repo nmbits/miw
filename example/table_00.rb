@@ -28,13 +28,9 @@ if __FILE__ == $0
   v = MiW::TableView.new "table", dataset: dataset
   v.show
 
-  columns = [
-    {key: :name,       display_name: "Name"},
-    {key: :active,     display_name: "Active"},
-    {key: :created_at, display_name: "Created At"}
-  ]
-
-  v.columns = columns
+  v.add_column MiW::TableView::TextColumn.new(:name, "Name")
+  v.add_column MiW::TableView::TextColumn.new(:active, "Active")
+  v.add_column MiW::TableView::TextColumn.new(:created_at, "Created At", 240)
 
   sv = MiW::ScrollView.new "sv", horizontal: false
   w.add_child sv, resize: [true, true]
