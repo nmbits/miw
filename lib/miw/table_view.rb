@@ -9,15 +9,17 @@ module MiW
     MARGIN_RATIO = 1.4   # pseudo
     DEFAULT_WIDTH = 80
     DEFAULT_ALIGN = :left
-    def initialize(name, dataset: nil, tree_mode: false, **opts)
+    def initialize(name, dataset: nil, tree_mode: false, show_label: false, **opts)
       super name, **opts
       @offset = 0
       @columns = []
       @tree_mode = tree_mode
       @mod = 0
+      @show_label = show_label
       self.dataset = dataset
       @layout = Layout::HBox.new
     end
+    attr_reader :show_label
 
     def add_column(column)
       @columns << column
@@ -67,26 +69,51 @@ module MiW
     end
 
     def draw(rect)
-      rect_row = Rectangle.new 0, -@mod, width, row_height
-      cs = MiW.colors
+      if show_label
+        rect_label = Rectangle.new 0, 0, width, row_height
+        rect_rows = Rectangle.new 0, row_height, width, rect.height - row_height
+      else
+        rect_rows = rect
+      end
+      draw_labels rect_label if show_label
+      draw_rows rect_rows
       cairo.save do
-        cairo.rectangle rect.x, rect.y, rect.width, rect.height
-        cairo.clip
-        cairo.rectangle rect.x, rect.y, rect.width, rect.height
-        cairo.set_source_color cs[:control_background]
-        cairo.fill
-
-        @data_cache.each(@offset) do |row|
-          draw_row rect_row, row if rect_row.bottom > rect.top
-          rect_row.offset_by 0, rect_row.height
-          break if rect_row.y > rect.bottom
-        end
-
         cairo.set_source_rgb 0.3, 0.3, 0.3 # pseudo
         @columns.each do |column|
           cairo.move_to column.x, rect.top
           cairo.line_to column.x, rect.bottom
           cairo.stroke
+        end
+      end
+    end
+
+    def draw_labels(rect)
+      cairo.save do
+        cairo.rectangle rect.x, rect.y, rect.width, rect.height
+        cairo.clip true
+        cairo.set_source_color MiW.colors[:control_background]
+        cairo.fill
+        column_rect = rect.dup
+        @columns.each do |column|
+          column_rect.x = column.x
+          column_rect.width = column.width
+          column.draw_label cairo, column_rect
+        end
+      end
+    end
+
+    def draw_rows(rect)
+      cairo.save do
+        cairo.rectangle rect.x, rect.y, rect.width, rect.height
+        cairo.clip true
+        cairo.set_source_color MiW.colors[:control_background]
+        cairo.fill
+
+        rect_row = Rectangle.new rect.x, rect.y - @mod, rect.width, row_height
+        @data_cache.each(@offset) do |row|
+          draw_row rect_row, row
+          rect_row.y += row_height
+          break if rect_row.y > rect.bottom
         end
       end
     end
@@ -98,12 +125,10 @@ module MiW
         column_rect.width = column.width
         column.draw_value cairo, column_rect, row[column.key]
       end
-      cairo.save do
-        cairo.set_source_rgb 0.3, 0.3, 0.3 # pseudo
-        cairo.move_to rect.left, rect.bottom
-        cairo.line_to rect.right, rect.bottom
-        cairo.stroke
-      end
+      cairo.set_source_rgb 0.3, 0.3, 0.3 # pseudo
+      cairo.move_to rect.left, rect.bottom
+      cairo.line_to rect.right, rect.bottom
+      cairo.stroke
     end
   end
 end

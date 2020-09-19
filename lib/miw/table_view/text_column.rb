@@ -16,9 +16,6 @@ module MiW
           cairo.show_pango_layout panl
         end
       end
-
-      def draw_label(cairo, rect)
-      end
     end
   end
 end
