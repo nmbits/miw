@@ -3,8 +3,8 @@ require 'miw/scroll_bar'
 
 module MiW
   class ScrollView < View
-    def initialize(name, vertical: true, horizontal: true, target: nil, **opts)
-      super name, **opts
+    def initialize(id, vertical: true, horizontal: true, target: nil, **opts)
+      super id, **opts
       @scroll_bars = {}
       if vertical
         add_scroll_bar(:vertical)
@@ -36,7 +36,8 @@ module MiW
       if @scroll_bars[orientation]
         raise "scroll bar for #{orientation} already exist"
       end
-      scroll_bar = ScrollBar.new orientation.to_s, orientation: orientation, range: (0..1), proportion: 1
+      scroll_bar = ScrollBar.new "__miw_scroll_bar_#{orientation}".to_sym,
+                                 orientation: orientation, range: (0..1), proportion: 1
       scroll_bar.add_observer self
       add_child scroll_bar
       scroll_bar.show

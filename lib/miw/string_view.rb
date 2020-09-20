@@ -4,8 +4,8 @@ require 'pango'
 
 module MiW
   class StringView < View
-    def initialize(name, string: "", **opts)
-      super
+    def initialize(id, string: "", **opts)
+      super id, **opts
       @string = string
     end
 

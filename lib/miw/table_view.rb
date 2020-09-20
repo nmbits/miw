@@ -9,8 +9,8 @@ module MiW
     MARGIN_RATIO = 1.4   # pseudo
     DEFAULT_WIDTH = 80
     DEFAULT_ALIGN = :left
-    def initialize(name, dataset: nil, tree_mode: false, show_label: false, **opts)
-      super name, **opts
+    def initialize(id, dataset: nil, tree_mode: false, show_label: false, **opts)
+      super id, **opts
       @offset = 0
       @columns = []
       @tree_mode = tree_mode

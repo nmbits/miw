@@ -7,8 +7,8 @@ require 'miw/menu_window'
 
 module MiW
   class Menu < View
-    def initialize(name, font: MiW.fonts[:ui], layout: Layout::VBox, **opts)
-      super name, font: font, layout: layout, **opts
+    def initialize(id, font: MiW.fonts[:ui], layout: Layout::VBox, **opts)
+      super id, font: font, layout: layout, **opts
       @items = []
     end
     attr_reader :items, :master, :highlight

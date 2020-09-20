@@ -12,7 +12,7 @@ module MiW
       @cairo = Cairo::Context.new surface
       @pango_layout = @cairo.create_pango_layout
       @mouse_handler = MouseHandler.new self
-      @root = View.new "__miw_root_view__", layout: layout
+      @root = View.new :__miw_root_view__, layout: layout
       @root.root = true
       @root.set_window self
       @root.resize_to width, height

@@ -6,7 +6,7 @@ require 'pango'
 
 module MiW
   class TextView < View
-    def initialize(name, font: nil, **opts)
+    def initialize(id, font: nil, **opts)
       super
       @layouts = []
       @top_linum = 0

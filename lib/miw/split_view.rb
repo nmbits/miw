@@ -71,7 +71,7 @@ module MiW
 
     GAP_WIDTH = 10 # pseudo
 
-    def initialize(name, orientation: :horizontal, layout: nil, **opts)
+    def initialize(id, orientation: :horizontal, layout: nil, **opts)
       case orientation
       when :vertical
         layout = Layout::VBox.new
@@ -81,7 +81,7 @@ module MiW
         raise ArgumentError, "orientation should be :vertical or :horizontal"
       end
       layout.spacing = GAP_WIDTH
-      super name, layout: layout, **opts
+      super id, layout: layout, **opts
       @orientation = orientation
     end
     attr_reader :orientation

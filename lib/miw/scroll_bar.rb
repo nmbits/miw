@@ -7,10 +7,10 @@ module MiW
 
     RepeatInfo = Struct.new(:dir, :threshold)
 
-    def initialize(name, orientation: :vertical, thickness: 16,
+    def initialize(id, orientation: :vertical, thickness: 16,
                    range: (0..1000), value: 0, step: nil,
                    proportion: 50, min_proportion: 50, size: nil, **opts)
-      super name, **opts
+      super id, **opts
       unless VALID_ORIENTATION.include? orientation
         raise ArgumentError, "invalid orientation specified"
       end

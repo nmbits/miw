@@ -7,8 +7,8 @@ module MiW
   class MenuBar < Menu
     EXTENT_RATIO = 1.4 # pseudo
     MARGINE_RATIO = 0.4 # pseudo
-    def initialize(name, layout: Layout::HBox, **opts)
-      super name, layout: layout, **opts
+    def initialize(id, layout: Layout::HBox, **opts)
+      super id, layout: layout, **opts
       resize_to DEFAULT_SIZE
     end
 

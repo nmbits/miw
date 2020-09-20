@@ -7,18 +7,18 @@ require 'set'
 module MiW
   class View
 
-    attr_reader :parent, :window, :name, :layout
+    attr_reader :parent, :window, :id, :layout
     attr_accessor :font, :layout_hints
 
     DEFAULT_SIZE = Size.new(50, 50).freeze
     ZERO_SIZE = [0, 0].freeze
     INFINITE_SIZE = [Float::INFINITY, Float::INFINITY].freeze
 
-    def initialize(name, layout: nil, font: nil, size: nil, **opts)
+    def initialize(id, layout: nil, font: nil, size: nil, **opts)
       @options = opts
       @frame = MiW::Rectangle.new 0, 0, 0, 0
       @frame.resize_to size || DEFAULT_SIZE
-      @name = name
+      @id = id
       @children = []
       @visible = true
       if layout.class == Class
