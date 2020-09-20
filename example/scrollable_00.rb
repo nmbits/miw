@@ -21,7 +21,7 @@ if __FILE__ == $0
     attr_reader :view_port, :extent
 
     def frame_resized(width, height)
-      rect = content_rect
+      rect = MiW::Rectangle.new 0, 0, width, height
       nw = (rect.width * @ratio).to_i
       nh = (rect.height * @ratio).to_i
       @view_port.resize_to nw, nh
@@ -34,6 +34,7 @@ if __FILE__ == $0
       end
       @view_port.offset_by dx, dy
       view_port_changed
+      invalidate
     end
 
     def mouse_down(mx, my, button, status, count)
@@ -70,7 +71,6 @@ if __FILE__ == $0
     end
 
     def draw(rect)
-      rect = content_rect
       dx = (@view_port.left % BOX_SIZE) * @ratio
       dy = (@view_port.top % BOX_SIZE) * @ratio
       # vertical
@@ -100,6 +100,13 @@ if __FILE__ == $0
     def scroll_to(x, y)
       @view_port.offset_to x, y
       invalidate
+    end
+
+    def scroll_bars_rect
+      p __callee__
+      rect = bounds
+      rect.inset_by 20
+      rect
     end
   end
 

@@ -83,28 +83,28 @@ module MiW
     def scroll_to x, y
     end
 
-    def content_rect
-      rect = Rectangle.new 0, 0, self.width, self.height
-      if @__miw_scrollable_v_sc.visible?
-        rect.width -= @__miw_scrollable_v_sc.thickness
-      end
-      if @__miw_scrollable_h_sc.visible?
-        rect.height -= @__miw_scrollable_h_sc.thickness        
-      end
-      rect
+    def scroll_bars_rect
+      bounds
     end
 
     def do_layout
-      rect = content_rect
-      @layout&.do_layout self.each_visible_child_with_hint(except: SCROLL_BAR_IDS), rect
+      @layout&.do_layout self.each_visible_child_with_hint(except: SCROLL_BAR_IDS), bounds
+
+      rect = scroll_bars_rect.dup
+      if @__miw_scrollable_h_sc.visible?
+        rect.height -= @__miw_scrollable_h_sc.thickness
+      end
+      if @__miw_scrollable_v_sc.visible?
+        rect.width -= @__miw_scrollable_v_sc.thickness
+      end
 
       if @__miw_scrollable_h_sc.visible?
-        @__miw_scrollable_h_sc.offset_to 0,          rect.height
+        @__miw_scrollable_h_sc.offset_to rect.left, rect.bottom
         @__miw_scrollable_h_sc.resize_to rect.width, @__miw_scrollable_v_sc.thickness
       end
 
       if @__miw_scrollable_v_sc.visible?
-        @__miw_scrollable_v_sc.offset_to rect.width, 0
+        @__miw_scrollable_v_sc.offset_to rect.right, rect.top
         @__miw_scrollable_v_sc.resize_to @__miw_scrollable_h_sc.thickness, rect.height
       end
     end
