@@ -62,7 +62,7 @@ if __FILE__ == $0
     EM.stop_event_loop
   end
 
-  w.add_child PangoTest.new("pango"), resize: [true, true]
+  w.add_child PangoTest.new(:pango), resize: [true, true]
 
   w.show
   MiW.run

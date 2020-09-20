@@ -17,7 +17,7 @@ if __FILE__ == $0
     end
   end
 
-  v = MiW::View.new "view"
+  v = MiW::View.new :view
   def v.mouse_down(x, y, button, state, count)
     if button == 3
       popup = MiW::PopupMenu.new("popup")
@@ -41,16 +41,16 @@ if __FILE__ == $0
     end
   end
 
-  m = MiW::MenuBar.new "menu_bar"
+  m = MiW::MenuBar.new :menu_bar
 
-  file_menu = MiW::Menu.new "file_menu"
+  file_menu = MiW::Menu.new :file_menu
   file_menu.add_item "Open ..."
   file_menu.add_item "Save ..."
   file_menu.add_item "Save as ..."
   file_menu.add_separator_item
 
   2.times do |j|
-    submenu = MiW::Menu.new "submenu 1"
+    submenu = MiW::Menu.new :submenu_1
     10.times do |i|
       submenu.add_item "item #{j}-#{i}"
     end
@@ -59,7 +59,7 @@ if __FILE__ == $0
 
   file_menu.add_item "fuga"
 
-  edit_menu = MiW::Menu.new "edit"
+  edit_menu = MiW::Menu.new :edit
   edit_menu.add_item "Cut"
   edit_menu.add_item "Copy"
   edit_menu.add_item "Paste"

@@ -11,10 +11,10 @@ if __FILE__ == $0
     EM.stop_event_loop
   end
 
-  v = MiW::SplitView.new "split", orientation: orientation
+  v = MiW::SplitView.new :split, orientation: orientation
 
   8.times do |i|
-    t = MiW::TextView.new "text_#{i}"
+    t = MiW::TextView.new "text_#{i}".to_sym
     t.set_text i.to_s
     resize = if i.even?
                [true, true]

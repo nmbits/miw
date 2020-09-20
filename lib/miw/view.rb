@@ -15,10 +15,15 @@ module MiW
     INFINITE_SIZE = [Float::INFINITY, Float::INFINITY].freeze
 
     def initialize(id, layout: nil, font: nil, size: nil, **opts)
+      case id
+      when Symbol, String
+        @id = id.to_sym
+      else
+        raise TypeError, "id should be a Symbol or String."
+      end
       @options = opts
       @frame = MiW::Rectangle.new 0, 0, 0, 0
       @frame.resize_to size || DEFAULT_SIZE
-      @id = id
       @children = []
       @visible = true
       if layout.class == Class
@@ -154,7 +159,14 @@ module MiW
     end
 
     def child_at(i)
-      @children[i]
+      case i
+      when Symbol
+        @children.find { |c| c.id == i }
+      when Integer
+        @children[i]
+      else
+        raise TypeError, "arg 0 should be a Symbol or Integer"
+      end
     end
 
     def remove_self
@@ -235,8 +247,10 @@ module MiW
     end
 
     def invalidate(rect = self.bounds)
-      ax, ay = convert_to_window rect.x, rect.y
-      @window.invalidate ax, ay, rect.width, rect.height
+      if window
+        ax, ay = convert_to_window rect.x, rect.y
+        window.invalidate ax, ay, rect.width, rect.height
+      end
     end
 
     # visibility
@@ -341,11 +355,14 @@ module MiW
       end
     end
 
-    def each_visible_child_with_hint
+    def each_visible_child_with_hint(except: [])
       if block_given?
-        @children.each { |c| yield c, c.layout_hints if c.visible? }
+        @children.each do |c|
+          next if except.include? c.id || c.hidden?
+          yield c, c.layout_hints
+        end
       else
-        self.to_enum __callee__
+        self.to_enum __callee__, except: except
       end
     end
 

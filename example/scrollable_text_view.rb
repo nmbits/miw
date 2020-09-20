@@ -10,13 +10,13 @@ if __FILE__ == $0
     EM.stop_event_loop
   end
 
-  sv = MiW::ScrollView.new("sv")
+  sv = MiW::ScrollView.new :sv
   w.add_child sv, resize: [true, true]
 
   dir = File.dirname(__FILE__)
   text = File.read(dir + "/../lib/miw/text_view.rb")
 
-  v = MiW::TextView.new("text_view_0")
+  v = MiW::TextView.new :text_view_0
   v.set_text text
   sv.target = v
 

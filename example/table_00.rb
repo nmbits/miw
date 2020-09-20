@@ -25,14 +25,14 @@ if __FILE__ == $0
     dataset.insert name: "item_#{i}"
   end
 
-  v = MiW::TableView.new "table", dataset: dataset, show_label: true
+  v = MiW::TableView.new :table, dataset: dataset, show_label: true
   v.show
 
   v.add_column MiW::TableView::TextColumn.new(:name, "Name", min: 20, max: 150)
   v.add_column MiW::TableView::TextColumn.new(:active, "Active", min: 30, max: 150, resize: true)
   v.add_column MiW::TableView::TextColumn.new(:created_at, "Created At", width: 240, min: 30, resize: true)
 
-  sv = MiW::ScrollView.new "sv", horizontal: false
+  sv = MiW::ScrollView.new :sv, horizontal: false
   w.add_child sv, resize: [true, true]
 
   sv.target = v

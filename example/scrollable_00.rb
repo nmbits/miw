@@ -1,10 +1,12 @@
 # coding: utf-8
 require 'bundler/setup'
 require 'miw'
+require 'miw/scrollable'
 
 if __FILE__ == $0
 
   class Check < MiW::View
+    include MiW::Scrollable
     BOX_SIZE = 50
     EXTENT_SIZE = 1000
     RATIO_MIN = 0.1
@@ -14,12 +16,14 @@ if __FILE__ == $0
       @view_port = MiW::Rectangle.new(0, 0, 100, 100)
       @extent = MiW::Rectangle.new(0, 0, EXTENT_SIZE, EXTENT_SIZE)
       @ratio = 1.0
+      initialize_scroll_bars(horizontal: true, vertical: true)
     end
     attr_reader :view_port, :extent
 
     def frame_resized(width, height)
-      nw = (width * @ratio).to_i
-      nh = (height * @ratio).to_i
+      rect = content_rect
+      nw = (rect.width * @ratio).to_i
+      nh = (rect.height * @ratio).to_i
       @view_port.resize_to nw, nh
       dx = dy = 0
       if @view_port.right > EXTENT_SIZE
@@ -29,7 +33,7 @@ if __FILE__ == $0
         dy = EXTENT_SIZE - @view_port.bottom
       end
       @view_port.offset_by dx, dy
-      trigger :view_port_changed
+      view_port_changed
     end
 
     def mouse_down(mx, my, button, status, count)
@@ -59,13 +63,14 @@ if __FILE__ == $0
         @view_port.offset_to x, y
         @px = mx
         @py = my
-        trigger :view_port_changed
+        view_port_changed
         invalidate
       end
       p MiW.get_mouse
     end
 
     def draw(rect)
+      rect = content_rect
       dx = (@view_port.left % BOX_SIZE) * @ratio
       dy = (@view_port.top % BOX_SIZE) * @ratio
       # vertical
@@ -99,7 +104,7 @@ if __FILE__ == $0
   end
 
   w = MiW::Window.new("test", 10, 10, 400, 400, layout: MiW::Layout::VBox)
-  w.title = "scroll view - スクロールビュー"
+  w.title = "scroll view"
   def w.quit_requested
     p :quit_requested
     EM.stop_event_loop
@@ -110,10 +115,8 @@ if __FILE__ == $0
   m.add_item MiW::MenuItem.new("Edit")
   w.add_child m, resize: [true, false]
 
-  sv = MiW::ScrollView.new :sv
-  w.add_child sv, resize: [true, true]
   v = Check.new :v
-  sv.target = v
+  w.add_child v, resize: [true, true]
 
   w.show
   MiW.run

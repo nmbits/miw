@@ -11,15 +11,15 @@ if __FILE__ == $0
     EM.stop_event_loop
   end
 
-  v = MiW::SplitView.new "split", orientation: orientation
-  v1 = MiW::TextView.new "text1"
+  v = MiW::SplitView.new :split, orientation: orientation
+  v1 = MiW::TextView.new :text1
   v1.resize_to 50, 50
   v1.set_text "1"
-  v2 = MiW::TextView.new "text2"
+  v2 = MiW::TextView.new :text2
   v2.resize_to 50, 50
   v2.min_size = MiW::Size.new(20, 20)
   v2.set_text "2"
-  v3 = MiW::TextView.new "text3"
+  v3 = MiW::TextView.new :text3
   v3.resize_to 50, 50
   v3.min_size = MiW::Size.new(20, 20)
   v3.max_size = MiW::Size.new(100, 100)
