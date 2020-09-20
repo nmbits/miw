@@ -16,7 +16,7 @@ if __FILE__ == $0
       @view_port = MiW::Rectangle.new(0, 0, 100, 100)
       @extent = MiW::Rectangle.new(0, 0, EXTENT_SIZE, EXTENT_SIZE)
       @ratio = 1.0
-      initialize_scrollable(horizontal: true, vertical: true)
+      initialize_scrollable true, true
     end
     attr_reader :view_port, :extent
 

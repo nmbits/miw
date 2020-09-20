@@ -7,7 +7,7 @@ module MiW
 
     SCROLL_BAR_IDS = [:__miw_scrollable_h_sc, :__miw_scrollable_v_sc]
 
-    def initialize_scrollable(horizontal: false, vertical: false)
+    def initialize_scrollable(horizontal, vertical)
       scroll_bar = ScrollBar.new :__miw_scrollable_h_sc, orientation: :horizontal
       range = (extent.left..extent.right)
       scroll_bar.set_range range, view_port.left

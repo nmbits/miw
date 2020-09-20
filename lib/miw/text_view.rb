@@ -16,7 +16,7 @@ module MiW
       @buffer = MiW::Model::TextBuffer.new
       @cursor = 0
       self.font = font || MiW.fonts[:monospace]
-      initialize_scrollable vertical: true, horizontal: false
+      initialize_scrollable false, true
       add_observer self
     end
 
