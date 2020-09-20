@@ -2,10 +2,12 @@ require 'miw'
 require 'miw/view'
 require 'miw/keysym'
 require 'miw/model/text_buffer'
+require 'miw/scrollable'
 require 'pango'
 
 module MiW
   class TextView < View
+    include Scrollable
     def initialize(id, font: nil, **opts)
       super
       @layouts = []
@@ -14,6 +16,8 @@ module MiW
       @buffer = MiW::Model::TextBuffer.new
       @cursor = 0
       self.font = font || MiW.fonts[:monospace]
+      initialize_scrollable vertical: true, horizontal: false
+      add_observer self
     end
 
     def set_text(text)
@@ -21,12 +25,8 @@ module MiW
       @buffer.clear
       @buffer.insert 0, text
       @cursor = 0
-      if window
-        @extent.resize_to 1, count_lines
-        trigger :extent_changed
-        update_pango_layout_all
-        trigger :view_port_changed
-      end
+      trigger :extent_changed
+      trigger :view_port_changed
     end
 
     def insert(text, offset = nil)
