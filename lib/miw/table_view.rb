@@ -1,8 +1,10 @@
 require 'miw'
 require 'miw/layout/box'
+require 'miw/scrollable'
 
 module MiW
   class TableView < View
+    include Scrollable
     autoload :DataCache, "miw/table_view/data_cache"
     autoload :TextColumn, "miw/table_view/text_column"
 
@@ -10,14 +12,16 @@ module MiW
     DEFAULT_WIDTH = 80
     DEFAULT_ALIGN = :left
     def initialize(id, dataset: nil, tree_mode: false, show_label: false, **opts)
-      super id, **opts
+      super id, layout: Layout::HBox, **opts
       @offset = 0
       @columns = []
       @tree_mode = tree_mode
       @mod = 0
       @show_label = show_label
+      @columns_layout = Layout::HBox.new
       self.dataset = dataset
-      @layout = Layout::HBox.new
+      add_observer self
+      initialize_scrollable false, true
     end
     attr_reader :show_label
 
@@ -30,14 +34,22 @@ module MiW
     end
 
     def extent
-      Rectangle.new 0, 0, 100, @data_cache.count * row_height
+      r = Rectangle.new 0, 0, 100, @data_cache.count * row_height
+      p [:extent, r]
+      r
     end
 
     def view_port
-      Rectangle.new 0, @offset * row_height, 100, height
+      r = Rectangle.new 0, @offset * row_height, 100, height
+      if @show_label
+        r.height -= row_height
+      end
+      p [:view_port, r]
+      r
     end
 
     def scroll_to(x, y)
+      p [:scroll_to, x, y]
       if (h = row_height) > 0
         i = y / h
         @mod = y % h
@@ -48,6 +60,25 @@ module MiW
 
     def row_height
       (font_pixel_height * MARGIN_RATIO).ceil
+    end
+
+    def scroll_bars_rect
+      rect = bounds
+      if @show_label
+        rect.height -= row_height
+        rect.y += row_height
+      end
+      rect
+    end
+
+    def frame_resized(width, height)
+      p [:frame_resized]
+      trigger :extent_changed
+      trigger :view_port_changed
+    end
+
+    def each_visible_columns
+      @columns.each
     end
 
     def each_visible_column_with_hint
@@ -65,7 +96,8 @@ module MiW
     end
 
     def do_layout
-      @layout.do_layout each_visible_column_with_hint, self.bounds
+      super
+      @columns_layout.do_layout each_visible_column_with_hint, self.bounds
     end
 
     def draw(rect)
