@@ -1,7 +1,9 @@
 
 require 'bundler/setup'
 require 'miw'
+require 'miw/table_view/sequel_query'
 require 'sequel'
+
 
 if __FILE__ == $0
   w = MiW::Window.new("menu", 10, 10, 400, 400, layout: MiW::Layout::VBox)
@@ -25,7 +27,9 @@ if __FILE__ == $0
     dataset.insert name: "item_#{i}"
   end
 
-  v = MiW::TableView.new :table, dataset: dataset, show_label: true
+  query = MiW::TableView::SequelQuery.new dataset
+
+  v = MiW::TableView.new :table, query: query, show_label: true
   v.show
 
   v.add_column MiW::TableView::TextColumn.new(:name, "Name", min: 20, max: 150)

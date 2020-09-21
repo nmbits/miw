@@ -11,7 +11,7 @@ module MiW
     MARGIN_RATIO = 1.4   # pseudo
     DEFAULT_WIDTH = 80
     DEFAULT_ALIGN = :left
-    def initialize(id, dataset: nil, tree_mode: false, show_label: false, **opts)
+    def initialize(id, query: nil, tree_mode: false, show_label: false, **opts)
       super id, layout: Layout::HBox, **opts
       @offset = 0
       @columns = []
@@ -19,7 +19,7 @@ module MiW
       @mod = 0
       @show_label = show_label
       @columns_layout = Layout::HBox.new
-      self.dataset = dataset
+      self.query = query
       add_observer self
       initialize_scrollable false, true
     end
@@ -29,27 +29,23 @@ module MiW
       @columns << column
     end
 
-    def dataset=(dataset)
-      @data_cache = DataCache.new dataset
+    def query=(query)
+      @data_cache = DataCache.new query
     end
 
     def extent
-      r = Rectangle.new 0, 0, 100, @data_cache.count * row_height
-      p [:extent, r]
-      r
+      Rectangle.new 0, 0, 100, @data_cache.count * row_height
     end
 
     def view_port
-      r = Rectangle.new 0, @offset * row_height, 100, height
       if @show_label
-        r.height -= row_height
+        Rectangle.new 0, @offset * row_height, 100, height - row_height
+      else
+        Rectangle.new 0, @offset * row_height, 100, height
       end
-      p [:view_port, r]
-      r
     end
 
     def scroll_to(x, y)
-      p [:scroll_to, x, y]
       if (h = row_height) > 0
         i = y / h
         @mod = y % h
@@ -72,7 +68,6 @@ module MiW
     end
 
     def frame_resized(width, height)
-      p [:frame_resized]
       trigger :extent_changed
       trigger :view_port_changed
     end
@@ -131,6 +126,10 @@ module MiW
           column_rect.width = column.width
           column.draw_label cairo, column_rect
         end
+        cairo.set_source_rgb 0.3, 0.3, 0.3 # pseudo
+        cairo.move_to rect.left, rect.bottom
+        cairo.line_to rect.right, rect.bottom
+        cairo.stroke
       end
     end
 

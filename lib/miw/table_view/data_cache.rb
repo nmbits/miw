@@ -3,8 +3,8 @@ module MiW
   class TableView
     class DataCache
       DEFAULT_PAGE_SIZE = 4096
-      def initialize(dataset, page_size = DEFAULT_PAGE_SIZE)
-        @dataset = dataset
+      def initialize(query, page_size = DEFAULT_PAGE_SIZE)
+        @query = query
         @pages = {}
         @page_size = page_size
       end
@@ -15,7 +15,7 @@ module MiW
       end
 
       def count
-        @dataset.count
+        @query.count
       end
 
       def each(offset = 0)
@@ -23,7 +23,7 @@ module MiW
           page_offset = offset % @page_size
           page_index = offset / @page_size
           loop do
-            page = (@pages[page_index] ||= @dataset.offset(page_index * @page_size).limit(@page_size).all)
+            page = (@pages[page_index] ||= @query.get(page_index * @page_size, @page_size))
             break if page.empty?
             while page_offset < page.length
               yield page[page_offset]
