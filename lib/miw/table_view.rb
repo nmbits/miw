@@ -11,7 +11,8 @@ module MiW
     MARGIN_RATIO = 1.4   # pseudo
     DEFAULT_WIDTH = 80
     DEFAULT_ALIGN = :left
-    def initialize(id, query: nil, tree_mode: false, show_label: false, **opts)
+    def initialize(id, query: nil, tree_mode: false, show_label: false,
+                   scroll_bars: [false, true], **opts)
       super id, layout: Layout::HBox, **opts
       @offset = 0
       @columns = []
@@ -21,7 +22,7 @@ module MiW
       @columns_layout = Layout::HBox.new
       self.query = query
       add_observer self
-      initialize_scrollable false, true
+      initialize_scrollable *scroll_bars
     end
     attr_reader :show_label
 

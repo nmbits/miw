@@ -13,7 +13,7 @@ if __FILE__ == $0
   dir = File.dirname(__FILE__)
   text = File.read(dir + "/../lib/miw/text_view.rb")
 
-  v = MiW::TextView.new :text_view_0
+  v = MiW::TextView.new :text_view_0, scroll_bars: [false, true]
   v.set_text text
   w.add_child v, resize: [true, true]
 
