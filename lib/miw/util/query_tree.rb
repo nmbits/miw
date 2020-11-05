@@ -29,7 +29,7 @@ module MiW
         end
 
         def query
-          q = root.dataset.where(root.parent_field => @parent_id)
+          q = root.dataset.where(root.parent_field => @parent_id).order(root.order)
           # pp [:node_query, q]
           q
         end
@@ -124,7 +124,7 @@ module MiW
 
         def page_data(page)
           cache_key = @cache_keys[page]
-          data = cache_key ? root.cache.get(cache_key) : nil
+          data = cache_key && root.cache.get(cache_key)
           unless data
             q = query.offset(page * PAGE_SIZE).limit(PAGE_SIZE)
             # pp [:page_data, q]
