@@ -3,8 +3,9 @@ require 'miw/table_view/column'
 module MiW
   class TableView
     class TextColumn < Column
-      def draw_value(cairo, rect, value)
+      def draw(cairo, rect, item)
         cairo.save do
+          value = item[key]
           cairo.set_source_color MiW.colors[:control_forground]
           panl = cairo.create_pango_layout
           panl.font_description = MiW.fonts[:ui]
