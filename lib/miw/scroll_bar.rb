@@ -8,7 +8,7 @@ module MiW
     RepeatInfo = Struct.new(:dir, :threshold)
 
     def initialize(id, orientation: :vertical, thickness: 16,
-                   range: (0..1000), value: 0, step: nil,
+                   range: (0...1000), value: 0, step: nil,
                    proportion: 50, min_proportion: 50, size: nil, **opts)
       super id, **opts
       unless VALID_ORIENTATION.include? orientation
@@ -112,7 +112,7 @@ module MiW
           bottom = @knob.right
           mv = mx
         end
-        if mv >= top && mv <= bottom
+        if mv >= top && mv < bottom
           start_dragging mx, my
         else
           dir = mv < top ? :backward : :forward
