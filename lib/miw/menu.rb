@@ -120,8 +120,7 @@ module MiW
 
     def start_menuing
       @master = self
-      window.set_tracking self
-      window.grab_pointer
+      grab_input
     end
 
     def end_menuing
@@ -129,8 +128,7 @@ module MiW
       @master = nil
       @active_submenu_item = nil
       @highlight = nil
-      window.set_tracking nil
-      window.ungrab_pointer
+      ungrab_input
       invalidate
     end
 

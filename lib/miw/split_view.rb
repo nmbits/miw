@@ -92,8 +92,7 @@ module MiW
         if index && index > 0
           @resizer = Resizer.new self, index
           @mouse_pos = Point.new x, y
-          window.set_tracking self
-          window.grab_pointer
+          grab_input
         end
       end
     end
@@ -122,9 +121,8 @@ module MiW
     end
 
     def mouse_up(x, y, button, state)
-      if button == 1
-        window.set_tracking nil
-        window.ungrab_pointer
+      if button == 1 && @resizer
+        ungrab_input
         @resizer = nil
       end
     end

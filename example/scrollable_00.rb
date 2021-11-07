@@ -41,7 +41,7 @@ if __FILE__ == $0
       p button
       case button
       when 1
-        window.set_tracking self
+        grab_input
         @px = mx
         @py = my
         @dragging = true
@@ -49,7 +49,7 @@ if __FILE__ == $0
     end
 
     def mouse_up(*_)
-      window.set_tracking nil
+      ungrab_input
       @dragging = false
     end
 
