@@ -173,7 +173,11 @@ module MiW
     end
 
     def val_to_px(value)
-      value * px_size / @range.size
+      if @range.size > 0
+        value * px_size / @range.size
+      else
+        0
+      end
     end
 
     def px_to_val(px)
