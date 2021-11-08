@@ -1,7 +1,7 @@
 
 require 'bundler/setup'
 require 'miw'
-require 'miw/table_view/sequel_query'
+require 'miw/table_view/sequel'
 require 'sequel'
 
 
@@ -27,9 +27,9 @@ if __FILE__ == $0
     dataset.insert name: "item_#{i}"
   end
 
-  query = MiW::TableView::SequelQuery.new dataset
+  model = MiW::TableView::Sequel.new dataset
 
-  v = MiW::TableView.new :table, query: query, show_label: true
+  v = MiW::TableView.new :table, model: model, show_label: true
   v.show
 
   v.add_column MiW::TableView::TextColumn.new(:name, "Name", min: 20, max: 150)

@@ -9,7 +9,6 @@ module MiW
   autoload :MenuItem,        "miw/menu_item"
   autoload :MenuWindow,      "miw/menu_window"
   autoload :Model,           "miw/model"
-  autoload :MouseHandler,    "miw/mouse_handler"
   autoload :Pointe,          "miw/point"
   autoload :PopupMenu,       "miw/popup_menu"
   autoload :PopupMenuWindow, "miw/popup_menu_window"

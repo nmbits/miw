@@ -9,7 +9,7 @@ module MiW
 
     def initialize_scrollable(horizontal, vertical)
       scroll_bar = ScrollBar.new :__miw_scrollable_h_sc, orientation: :horizontal
-      range = (extent.left..extent.right)
+      range = (extent.left...extent.right)
       scroll_bar.set_range range, view_port.left
       scroll_bar.proportion = view_port.width
       scroll_bar.add_observer self
@@ -18,7 +18,7 @@ module MiW
       @__miw_scrollable_h_sc = scroll_bar
 
       scroll_bar = ScrollBar.new :__miw_scrollable_v_sc, orientation: :vertical
-      range = (extent.top..extent.bottom)
+      range = (extent.top...extent.bottom)
       scroll_bar.set_range range, view_port.top
       scroll_bar.proportion = view_port.height
       scroll_bar.add_observer self
@@ -66,9 +66,9 @@ module MiW
 
     def extent_changed(view = self)
       ext = view.extent
-      range = (ext.top..ext.bottom)
+      range = (ext.top...ext.bottom)
       @__miw_scrollable_v_sc.range = range if @__miw_scrollable_v_sc.range != range
-      range = (ext.left..ext.right)
+      range = (ext.left...ext.right)
       @__miw_scrollable_h_sc.range = range if @__miw_scrollable_h_sc.range != range
     end
 

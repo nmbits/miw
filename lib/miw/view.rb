@@ -476,5 +476,13 @@ module MiW
         convert_from_window x, y
       end
     end
+
+    def grab_input
+      window&.grab_input self
+    end
+
+    def ungrab_input
+      window&.ungrab_input self
+    end
   end
 end

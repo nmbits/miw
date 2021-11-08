@@ -47,6 +47,17 @@ module MiW
 
       attr_reader :eol
 
+      def eol_string
+        case @eol
+        when :unix
+          "\n"
+        when :dos
+          "\r\n"
+        when :mac
+          "\r"
+        end
+      end
+
       def capacity
         @memory.size
       end
@@ -58,6 +69,7 @@ module MiW
       def insert(cur, str)
         size = str.bytesize
         return if size == 0
+        eols = str.scan(eol_string).size
         move_gap cur
         extend_gap size if @gap_length < size
         MEMMOVE.call(@memory + @gap_begin, str, size)
@@ -67,12 +79,15 @@ module MiW
           @linum_cache_cur = 0
           @linum_cache_linum = 0
         end
+        @count_lines += eols
         nil
       end
 
       def delete(cur, len)
         return if len > self.length
         return if self.length - cur < len
+        eols = count_eols(cur, len)
+        @count_lines -= eols
         move_gap cur
         @gap_length += len
         shrink_gap
@@ -189,9 +204,7 @@ module MiW
       end
 
       def count_lines
-        len = length - @linum_cache_cur
-        eols = count_eols(@linum_cache_cur, len)
-        @linum_cache_linum + eols + 1
+        @count_lines
       end
 
       def line_to_pos(linum)
@@ -265,6 +278,7 @@ module MiW
         @gap_length = ALLOC_UNIT
         @linum_cache_linum = 0
         @linum_cache_cur = 0
+        @count_lines = 1
       end
 
       def realloc(size)

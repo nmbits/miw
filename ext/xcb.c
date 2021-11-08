@@ -61,31 +61,33 @@ ID id_type;
 xcb_atom_t g_atom_wm_protocols;
 xcb_atom_t g_atom_wm_delete_window;
 xcb_atom_t g_atom_wm_change_state;
+xcb_atom_t g_atom_wm_transient_for;
 xcb_atom_t g_atom_net_wm_window_type;
 xcb_atom_t g_atom_net_wm_name;
 xcb_atom_t g_atom_utf8_string;
 
-struct miw_window_type_map
+typedef struct miw_window_type_map_
 {
 	ID id;
 	xcb_atom_t atom;
+	int override_redirect;
 	const char *name;
-};
+} miw_window_type_map_t;
 
-struct miw_window_type_map g_window_type_map[] =
+miw_window_type_map_t g_window_type_map[] =
 	{
-	 {0, 0, "dock"},
-	 {0, 0, "toolbar"},
-	 {0, 0, "menu"},
-	 {0, 0, "utility"},
-	 {0, 0, "dialog"},
-	 {0, 0, "dropdown_menu"},
-	 {0, 0, "popup_menu"},
-	 {0, 0, "tooltip"},
-	 {0, 0, "notification"},
-	 {0, 0, "combo"},
-	 {0, 0, "dnd"},
-	 {0, 0, "normal"}
+		{0, 0, 0, "dock"},
+		{0, 0, 0, "toolbar"},
+		{0, 0, 0, "menu"},
+		{0, 0, 0, "utility"},
+		{0, 0, 0, "dialog"},
+		{0, 0, 1, "dropdown_menu"},
+		{0, 0, 1, "popup_menu"},
+		{0, 0, 1, "tooltip"},
+		{0, 0, 1, "notification"},
+		{0, 0, 1, "combo"},
+		{0, 0, 1, "dnd"},
+		// {0, 0, 0, "normal"}
 	};
 
 struct xkb_context *g_xkb_context;
@@ -304,10 +306,9 @@ miw_xcb_create_window(miw_xcb_window_t *w, xcb_connection_t *c,
 					  mask,
 					  value);
 
-	if (g_atom_wm_protocols && g_atom_wm_delete_window)
-		xcb_change_property(c, XCB_PROP_MODE_REPLACE, window,
-							g_atom_wm_protocols, XCB_ATOM_ATOM,
-							32, 1, &g_atom_wm_delete_window);
+	xcb_change_property(c, XCB_PROP_MODE_REPLACE, window,
+						g_atom_wm_protocols, XCB_ATOM_ATOM,
+						32, 1, &g_atom_wm_delete_window);
 
 	miw_xcb_surface_size(width, height, &sur_width, &sur_height);
 	surface = miw_xcb_create_surface(c, sur_width, sur_height, &pixmap);
@@ -327,14 +328,24 @@ miw_xcb_create_window(miw_xcb_window_t *w, xcb_connection_t *c,
 	w->sur_height = sur_height;
 }
 
-static xcb_atom_t
-find_window_type(VALUE sym)
+static const miw_window_type_map_t *
+find_window_type_map(VALUE sym)
 {
 	ID id = SYM2ID(sym);
 	for (int i = 0; i < sizeof(g_window_type_map) / sizeof(g_window_type_map[0]); i++) {
 		if (g_window_type_map[i].id == id)
-			return g_window_type_map[i].atom;
+			return &g_window_type_map[i];
 	}
+	return NULL;
+}
+
+static xcb_atom_t
+find_window_type(VALUE sym)
+{
+	const miw_window_type_map_t *map =
+		find_window_type_map(sym);
+	if (map)
+		return map->atom;
 	return XCB_ATOM_NONE;
 }
 
@@ -369,6 +380,42 @@ miw_xcb_win_initialize(VALUE self,
 						32, 1, &window_type);
 	xcb_flush(c);
 	st_insert(g_st_window, (st_data_t)w->window, (st_data_t)self);
+	return self;
+}
+
+static VALUE
+miw_xcb_win_set_transient_for(VALUE self, VALUE window, VALUE type)
+{
+	xcb_connection_t *c = miw_xcb_connection();
+	miw_xcb_window_t *w = DATA_PTR(self);
+	miw_xcb_window_t *t;
+	const miw_window_type_map_t *map;
+
+	uint32_t override_redirect_values[] = {1};
+
+	if (w->window == 0)
+		rb_raise(rb_eRuntimeError, "self is not initialized");
+	Check_Type(window, RUBY_T_DATA);
+	t = DATA_PTR(window);
+	if (t->window == 0)
+		rb_raise(rb_eRuntimeError, "window is not initialized");
+
+	Check_Type(type, RUBY_T_SYMBOL);
+	map = find_window_type_map(type);
+	if (!map)
+		rb_raise(rb_eArgError, "type not found");
+
+	xcb_change_property(c, XCB_PROP_MODE_REPLACE, w->window,
+						g_atom_net_wm_window_type, XCB_ATOM_ATOM,
+						32, 1, &map->atom);
+	xcb_change_property(c, XCB_PROP_MODE_REPLACE, w->window,
+						XCB_ATOM_WM_TRANSIENT_FOR, XCB_ATOM_WINDOW,
+						32, 1, &t->window);
+	if (map->override_redirect)
+		xcb_change_window_attributes(c, w->window,
+									 XCB_CW_OVERRIDE_REDIRECT,
+									 override_redirect_values);
+	xcb_flush(c);
 	return self;
 }
 
@@ -959,6 +1006,7 @@ miw_xcb_s_setup(VALUE m_xcb)
 	g_atom_wm_protocols = miw_xcb_intern_atom(c, "WM_PROTOCOLS");
 	g_atom_wm_delete_window = miw_xcb_intern_atom(c, "WM_DELETE_WINDOW");
 	g_atom_wm_change_state = miw_xcb_intern_atom(c, "WM_CHANGE_STATE");
+	g_atom_wm_transient_for = miw_xcb_intern_atom(c, "WM_TRANSIENT_FOR");
 	g_atom_net_wm_name = miw_xcb_intern_atom(c, "_NET_WM_NAME");
 	g_atom_net_wm_window_type = miw_xcb_intern_atom(c, "_NET_WM_WINDOW_TYPE");
 
@@ -1160,6 +1208,7 @@ miw_xcb_init()
 	rb_define_method(c, "get_mouse", miw_xcb_win_get_mouse, 0);
 	rb_define_method(c, "convert_to_screen", miw_xcb_win_convert_to_screen, 2);
 	rb_define_method(c, "convert_from_screen", miw_xcb_win_convert_from_screen, 2);
+	rb_define_method(c, "set_transient_for", miw_xcb_win_set_transient_for, 2);
 
 	DEFAULT_HOOK(draw, 4);
 	DEFAULT_HOOK(mouse_moved, 4);

@@ -8,7 +8,7 @@ module MiW
     RepeatInfo = Struct.new(:dir, :threshold)
 
     def initialize(id, orientation: :vertical, thickness: 16,
-                   range: (0..1000), value: 0, step: nil,
+                   range: (0...1000), value: 0, step: nil,
                    proportion: 50, min_proportion: 50, size: nil, **opts)
       super id, **opts
       unless VALID_ORIENTATION.include? orientation
@@ -102,7 +102,6 @@ module MiW
 
     def mouse_down(mx, my, button, status, count)
       if button == 1
-        window.set_tracking self
         if @orientation == :vertical
           top = @knob.top
           bottom = @knob.bottom
@@ -112,14 +111,10 @@ module MiW
           bottom = @knob.right
           mv = mx
         end
-        if mv >= top && mv <= bottom
+        if mv >= top && mv < bottom
           start_dragging mx, my
         else
-          dir = mv < top ? :backward : :forward
-          threshold = px_to_val mv
-          @repeat_info = RepeatInfo.new dir, threshold
-          scroll_page dir
-          EM.add_timer(0.2, method(:repeat_scroll_page))
+          start_repeat_page_scroll(top, mv)
         end
       end
     end
@@ -148,11 +143,10 @@ module MiW
 
     def mouse_up(mx, my, button, *a)
       if button == 1
-        window.set_tracking nil
         if dragging?
           end_dragging
-        elsif @repeat_info
-          @repeat_info = nil
+        elsif repeat_page_scroll?
+          end_repeat_page_scroll
         end
         invalidate
       end
@@ -204,16 +198,36 @@ module MiW
     end
 
     def start_dragging(mx, my)
+      grab_input
       @drag_start_px = vertical? ? my : mx
       @drag_start_val = value
     end
 
     def end_dragging
+      ungrab_input
       @drag_start_px = nil
     end
 
     def dragging?
       @drag_start_px != nil
+    end
+
+    def start_repeat_page_scroll(px, mouse_px)
+      grab_input
+      dir = mouse_px < px ? :backward : :forward
+      threshold = px_to_val mouse_px
+      @repeat_info = RepeatInfo.new dir, threshold
+      scroll_page dir
+      EM.add_timer(0.2, method(:repeat_scroll_page))
+    end
+
+    def end_repeat_page_scroll
+      ungrab_input
+      @repeat_info = nil
+    end
+
+    def repeat_page_scroll?
+      @repeat_info != nil
     end
 
     def align_val(val)
@@ -234,7 +248,6 @@ module MiW
 
     def repeat_scroll_page
       if @repeat_info
-        do_scroll = false
         if (@repeat_info.dir == :forward && @value + @proportion < @repeat_info.threshold) ||
            (@repeat_info.dir == :backward && @value > @repeat_info.threshold)
           scroll_page @repeat_info.dir
