@@ -20,7 +20,8 @@ module MiW
       @columns_layout = Layout::HBox.new
       @current = 0
       add_observer self
-      initialize_scrollable *scroll_bars
+      # initialize_scrollable *scroll_bars
+      initialize_scrollable false, true
     end
     attr_reader :show_label
 
