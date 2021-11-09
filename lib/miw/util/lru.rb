@@ -4,17 +4,31 @@ module MiW
     class LRU
       DEFAULT_MAX_SIZE = 128
       def initialize(max_size = DEFAULT_MAX_SIZE)
+        raise ArgumentError, "max_size should be greater than 0" unless max_size > 0
         @max_size = max_size
         @data = Hash.new
       end
 
       def []=(key, object)
-        @data.shift if @data.delete(key).nil? && @data.size > @max_size
-        @data[key] = object
+        if object.nil?
+          delete key
+        else
+          @data.shift if @data.delete(key).nil? && @data.size >= @max_size
+          @data[key] = object
+        end
+        object
       end
 
       def [](key)
         (o = @data.delete(key)) && (@data[key] = o)
+      end
+
+      def soft_get(key)
+        @data[key]
+      end
+
+      def delete(key)
+        @data.delete key
       end
     end
 
@@ -25,14 +39,25 @@ module MiW
       end
 
       def cache(object)
-        key = @key
+        key = get_key
         @lru[key] = object
-        @key += 1
         key
       end
 
-      def get(cache_key)
+      def [](cache_key)
         @lru[cache_key]
+      end
+
+      def delete(cache_key)
+        @lru.delete(cache_key)
+      end
+
+      private
+
+      def get_key
+        key = @key
+        @key += 1
+        key
       end
     end
   end
