@@ -14,10 +14,14 @@ module MiW
       end
 
       def [](key)
-        (id = @map[key]) && @cache[id]
+        raise ArgumentError, "nil cannot be used as key" if key.nil?
+        result = ((id = @map[key]) && @cache[id])
+        @map.delete key unless result
+        result
       end
 
       def []=(key, data)
+        raise ArgumentError, "nil cannot be used as key" if key.nil?
         (id = @map[key]) && @cache.delete(id)
         @map[key] = @cache.cache data
         data
