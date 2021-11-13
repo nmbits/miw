@@ -1,35 +1,23 @@
 
 require 'bundler/setup'
 require 'miw'
-require 'miw/table_view/sequel'
-require 'sequel'
-
+require 'miw/table_view'
 
 if __FILE__ == $0
-  w = MiW::Window.new("menu", 10, 10, 400, 400, layout: MiW::Layout::VBox)
+  w = MiW::Window.new("table", 10, 10, 400, 400, layout: MiW::Layout::VBox)
   def w.quit_requested
     p :quit_requested
     EM.stop_event_loop
   end
 
-  DB = Sequel.sqlite
-
-  DB.create_table :items do
-    primary_key :id
-    String :name, unique: true, null: false
-    TrueClass :active, default: true
-    DateTime :created_at, default: Sequel::CURRENT_TIMESTAMP, :index=>true
-  end
-
-  dataset = DB[:items]
+  dataset = MiW::TableView::DataSet.new
 
   100.times do |i|
-    dataset.insert name: "item_#{i}"
+    dataset.insert id: i, active: true, name: "item_#{i}", created_at: Time.now
   end
+  # pp dataset
 
-  model = MiW::TableView::Sequel.new dataset
-
-  v = MiW::TableView.new :table, model: model, show_label: true
+  v = MiW::TableView.new :table, dataset: dataset, show_label: true
   v.show
 
   v.add_column MiW::TableView::TextColumn.new(:name, "Name", min: 20, max: 150)
