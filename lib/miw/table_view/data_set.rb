@@ -1,5 +1,5 @@
 module MiW
-  module TableView
+  class TableView
     class DataSet
       def initialize(id_field: :id, parent_field: :parent, tree: false)
         @storage = {}
@@ -60,9 +60,8 @@ module MiW
         end
       end
 
-      def count(filter)
-        raise ArgumentError unless filter
-        parent = filter[:parent]
+      def count(filter = nil)
+        parent = filter && filter[:parent]
         @storage.each_value.count{|item| item[@parent_field] == parent}
       end
 
