@@ -1,27 +1,32 @@
 require 'miw'
 require 'miw/layout/box'
 require 'miw/scrollable'
+require 'miw/util/cache_map'
 
 module MiW
   class TableView < View
     include Scrollable
-    autoload :TextColumn, "miw/table_view/text_column"
+    autoload :TextColumn,  "miw/table_view/text_column"
+    autoload :VisualState, "miw/table_view/visual_state"
+    autoload :DataSet,     "miw/table_view/data_set"
 
     MARGIN_RATIO = 1.4   # pseudo
     DEFAULT_WIDTH = 80
     DEFAULT_ALIGN = :left
-    def initialize(id, model: nil, tree_mode: false, show_label: false, **opts)
+    PAGE_SIZE = 200
+    def initialize(id, dataset: nil, tree_mode: false, show_label: false, **opts)
       super id, layout: Layout::HBox, **opts
-      @model = model
       @columns = []
       @tree_mode = tree_mode
       @mod = 0
       @show_label = show_label
       @columns_layout = Layout::HBox.new
       @current = 0
+      @cache = Util::Cache.new(32)
+      @vs = VisualState.new
       add_observer self
-      # initialize_scrollable *scroll_bars
       initialize_scrollable false, true
+      self.dataset = dataset
     end
     attr_reader :show_label
 
@@ -29,16 +34,14 @@ module MiW
       @columns << column
     end
 
-    def model=(model)
-      @model = model
+    def dataset=(dataset)
+      @dataset = dataset
+      @vs.reset_count @dataset.count
+      @vs.set_root_data Hash.new
     end
 
     def extent
-      if @model
-        Rectangle.new 0, 0, 100, @model.count * row_height
-      else
-        Rectangle.new 0, 0, 100, 100
-      end
+      Rectangle.new 0, 0, 100, @vs.count * row_height
     end
 
     def view_port
@@ -144,8 +147,36 @@ module MiW
         cairo.fill
 
         rect_item = Rectangle.new rect.x, rect.y - @mod, rect.width, row_height
-        @model&.each(@current) do |item|
-          draw_item rect_item, item
+        prev_subtree = nil
+        prev_page = nil
+        items = nil
+        @vs.each(@current) do |state, subtree, sindex|
+          if prev_subtree != subtree
+            prev_subtree = subtree
+            prev_page = nil
+          end
+          page = sindex / PAGE_SIZE
+          if page != prev_page
+            prev_page = page
+            items = nil
+          end
+          unless items
+            cache = (subtree.data[:cache] ||= Util::CacheMap.new(@cache))
+            items = cache[page]
+          end
+          unless items
+            parent = subtree.data[:parent]
+            items = @dataset.get page * PAGE_SIZE, PAGE_SIZE, {parent: parent}
+            cache[page] = items
+          end
+          rindex = sindex % PAGE_SIZE
+          item = items[rindex]
+
+          if state == :closed
+            draw_item rect_item, item  # todo
+          else  # :opened
+            draw_item rect_item, item  # todo
+          end
           rect_item.y += row_height
           break if rect_item.y > rect.bottom
         end
