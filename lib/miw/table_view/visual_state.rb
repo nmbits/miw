@@ -165,7 +165,6 @@ module MiW
         if block_given?
           while start < count
             subtree, child, cindex, sindex = @root.lookup start
-            pp [:lookup, start, subtree.__id__, child, cindex, sindex]
             raise RangeError unless subtree
             each_recursive subtree, child, cindex, sindex, &block
             start += subtree.count - sindex
