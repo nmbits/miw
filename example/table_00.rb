@@ -2,6 +2,7 @@
 require 'bundler/setup'
 require 'miw'
 require 'miw/table_view'
+require 'miw/model/data_set'
 
 if __FILE__ == $0
   w = MiW::Window.new("table", 10, 10, 400, 400, layout: MiW::Layout::VBox)
@@ -10,7 +11,7 @@ if __FILE__ == $0
     EM.stop_event_loop
   end
 
-  dataset = MiW::TableView::DataSet.new
+  dataset = MiW::Model::DataSet.new
 
   100.times do |i|
     dataset.insert id: i, active: true, name: "item_#{i}", created_at: Time.now

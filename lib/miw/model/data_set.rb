@@ -1,5 +1,5 @@
 module MiW
-  class TableView
+  module Model
     class DataSet
       def initialize(id_field: :id, parent_field: :parent, tree: false)
         @storage = {}
