@@ -13,7 +13,8 @@ module MiW
     MARGIN_RATIO = 1.4   # pseudo
     DEFAULT_WIDTH = 80
     DEFAULT_ALIGN = :left
-    PAGE_SIZE = 200
+    PAGE_SIZE = 50
+
     def initialize(id, dataset: nil, tree_mode: false, show_label: false, **opts)
       super id, layout: Layout::HBox, **opts
       @columns = []
@@ -22,7 +23,7 @@ module MiW
       @show_label = show_label
       @columns_layout = Layout::HBox.new
       @current = 0
-      @cache = Util::Cache.new(32)
+      @cache = Util::Cache.new(10)
       @vs = VisualState.new
       add_observer self
       initialize_scrollable false, true
@@ -172,22 +173,42 @@ module MiW
           rindex = sindex % PAGE_SIZE
           item = items[rindex]
 
-          if state == :closed
-            draw_item rect_item, item  # todo
-          else  # :opened
-            draw_item rect_item, item  # todo
-          end
+          draw_item rect_item, item, state, subtree.level
           rect_item.y += row_height
           break if rect_item.y > rect.bottom
         end
       end
     end
 
-    def draw_item(rect, item)
+    def draw_item(rect, item, state, level)
       column_rect = rect.dup
-      @columns.each do |column|
+      @columns.each_with_index do |column, i|
         column_rect.x = column.x
         column_rect.width = column.width
+        if i == 0
+          expander_width = rect.height            # TODO
+          if @dataset.group? item
+            triangle_width = (expander_width * 0.75).to_i  # TODO
+            if state == :opened
+              x = column_rect.x + (expander_width - triangle_width) / 2
+              y = column_rect.y + triangle_width / 2
+              cairo.move_to  x, y
+              cairo.triangle x,                      y,
+                             x + triangle_width    , y,
+                             x + triangle_width / 2, y + triangle_width / 2
+            else   # closed
+              x = column_rect.x + expander_width / 2
+              y = column_rect.y + (expander_width - triangle_width) / 2
+              cairo.move_to x, y
+              cairo.triangle x,                      y,
+                             x + triangle_width / 2, y + triangle_width / 2,
+                             x,                      y + triangle_width
+            end
+            cairo.fill
+          end
+          column_rect.x     += expander_width
+          column_rect.width -= expander_width
+        end
         column.draw cairo, column_rect, item
       end
       cairo.set_source_rgb 0.3, 0.3, 0.3 # pseudo
