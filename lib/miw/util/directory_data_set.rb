@@ -51,7 +51,7 @@ module MiW
         parent = (filter && filter[:parent])
         order = (filter && filter[:order]) || :name
 
-        dir = parent ? File.join(@path, parent) : @path
+        dir = parent ? parent : @path
 
         abs_path = File.absolute_path dir
 

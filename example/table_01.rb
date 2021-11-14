@@ -11,12 +11,12 @@ if __FILE__ == $0
     EM.stop_event_loop
   end
 
-  dataset = MiW::Util::DirectoryDataSet.new("/usr/include")
+  dataset = MiW::Util::DirectoryDataSet.new(".")
 
   v = MiW::TableView.new :table, dataset: dataset, show_label: true
   v.show
 
-  v.add_column MiW::TableView::TextColumn.new(:name, "Name", min: 20, max: 150)
+  v.add_column MiW::TableView::TextColumn.new(:name, "Name", min: 20, resize: true)
   v.add_column MiW::TableView::TextColumn.new(:size, "Size", min: 30, max: 150, resize: true)
   v.add_column MiW::TableView::TextColumn.new(:mtime, "mtime", width: 240, min: 30, resize: true)
 

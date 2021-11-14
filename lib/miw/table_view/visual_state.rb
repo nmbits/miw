@@ -145,29 +145,36 @@ module MiW
       end
 
       def each_recursive(subtree, child, cindex, sindex, &block)
+        ycount = 0
         subtree.each_child(child) do |ent|
           if Integer === ent
-            (ent - cindex).times do
+            n = ent - cindex
+            n.times do
               yield [:closed, subtree, sindex]
               sindex += 1
             end
+            ycount += n
           else
             yield [:opened, subtree, sindex]
-            each_recursive ent, 0, 0, 0, &block
             sindex += 1
+            ycount += each_recursive(ent, 0, 0, 0, &block) + 1
           end
           cindex = 0
         end
+        ycount
       end
       private :each_recursive
 
       def each(start = 0, &block)
+        @tmp ||= 0
+        @tmp += 1
         if block_given?
           while start < count
             subtree, child, cindex, sindex = @root.lookup start
+            # p [@tmp, start, subtree.__id__, child, cindex, subtree.count, sindex]
             raise RangeError unless subtree
-            each_recursive subtree, child, cindex, sindex, &block
-            start += subtree.count - sindex
+            ycount = each_recursive subtree, child, cindex, sindex, &block
+            start += ycount
           end
         else
           self.to_enum __callee__, start
@@ -179,9 +186,9 @@ module MiW
         raise RangeError unless subtree
         ent = subtree.child_at(child)
         if Integer === ent
-          [:closed, subtree, subtree.level, child, cindex, ent - cindex, sindex]
+          [:closed, subtree, sindex]
         else
-          [:opened, subtree, subtree.level, child, cindex, 1           , sindex]
+          [:opened, subtree, sindex]
         end
       end
 

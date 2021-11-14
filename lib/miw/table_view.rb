@@ -65,6 +65,10 @@ module MiW
       (font_pixel_height * MARGIN_RATIO).ceil
     end
 
+    def expander_width
+      row_height
+    end
+
     def scroll_bars_rect
       rect = bounds
       if @show_label
@@ -187,17 +191,18 @@ module MiW
         column_rect.width = column.width
         if i == 0
           expander_width = rect.height            # TODO
+          shift = expander_width * level
           if @dataset.group? item
             triangle_width = (expander_width * 0.75).to_i  # TODO
             if state == :opened
-              x = column_rect.x + (expander_width - triangle_width) / 2
+              x = column_rect.x + (expander_width - triangle_width) / 2 + shift
               y = column_rect.y + triangle_width / 2
               cairo.move_to  x, y
               cairo.triangle x,                      y,
                              x + triangle_width    , y,
                              x + triangle_width / 2, y + triangle_width / 2
             else   # closed
-              x = column_rect.x + expander_width / 2
+              x = column_rect.x + expander_width / 2 + shift
               y = column_rect.y + (expander_width - triangle_width) / 2
               cairo.move_to x, y
               cairo.triangle x,                      y,
@@ -206,15 +211,66 @@ module MiW
             end
             cairo.fill
           end
-          column_rect.x     += expander_width
-          column_rect.width -= expander_width
+          column_rect.x     += expander_width + shift
+          column_rect.width -= expander_width + shift
         end
-        column.draw cairo, column_rect, item
+        if column_rect.width > 0
+          column.draw cairo, column_rect, item
+        end
       end
       cairo.set_source_rgb 0.3, 0.3, 0.3 # pseudo
       cairo.move_to rect.left, rect.bottom
       cairo.line_to rect.right, rect.bottom
       cairo.stroke
+    end
+
+    def item_at(row)
+      state, subtree, sindex = @vs.lookup(row)
+      cache = subtree.data[:cache]
+      page = sindex / PAGE_SIZE
+      rindex = sindex % PAGE_SIZE
+      items = cache[page]
+      unless items
+        items = @dataset.get page * PAGE_SIZE, PAGE_SIZE, {parent: data[:parent]}
+        cache[page] = items
+      end
+      return [state, items[rindex], subtree.level]
+    end
+
+    def y_to_row(y)
+      answer = (y + @mod) / row_height + @current
+      # p [:y_to_row, @current, y, @mod, answer]
+      answer -= 1 if show_label
+      answer < 0 || answer >= @vs.count ? nil : answer
+    end
+
+    def expander_hit?(x, level)
+      ex = expander_width * level
+      if ex <= x && x < ex + expander_width
+        true
+      else
+        false
+      end
+    end
+
+    def mouse_down(x, y, detail, state, nclicks)
+      return unless detail == 1
+      row = y_to_row y
+      return unless row
+      state, item, level = item_at(row)
+      return unless @dataset.group?(item)
+      return unless expander_hit?(x, level)
+      if state == :closed
+        subtree = @vs.open(row)
+        data = Hash.new
+        data[:parent] = item[:id]
+        subtree.data = data
+        subtree.reset_count(@dataset.count(parent: item[:id]))
+      else
+        @vs.close(row)
+      end
+      invalidate
+      trigger :extent_changed
     end
   end
 end
