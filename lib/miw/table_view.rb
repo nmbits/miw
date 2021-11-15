@@ -1,11 +1,9 @@
 require 'miw'
 require 'miw/layout/box'
-require 'miw/scrollable'
 require 'miw/util/cache_map'
 
 module MiW
   class TableView < View
-    include Scrollable
     autoload :TextColumn,  "miw/table_view/text_column"
     autoload :VisualState, "miw/table_view/visual_state"
     autoload :DataSet,     "miw/table_view/data_set"
@@ -25,8 +23,6 @@ module MiW
       @current = 0
       @cache = Util::Cache.new(10)
       @vs = VisualState.new
-      add_observer self
-      initialize_scrollable false, true
       self.dataset = dataset
     end
     attr_reader :show_label
