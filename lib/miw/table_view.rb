@@ -42,14 +42,14 @@ module MiW
     end
 
     def view_port
-      if @show_label
-        Rectangle.new 0, @current * row_height, 100, height - row_height
-      else
-        Rectangle.new 0, @current * row_height, 100, height
-      end
+      visible_height = height - (@show_label ? row_height : 0)
+      content_height = @vs.count * row_height
+      h = visible_height < content_height ? visible_height : content_height
+      Rectangle.new 0, @current * row_height, 100, h
     end
 
     def scroll_to(x, y)
+      raise ArgumentError, "invalid x, y: #{x}, #{y}" if y < 0 || x < 0
       if row_height > 0
         @current = y / row_height
         @mod = y % row_height

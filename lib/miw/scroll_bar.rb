@@ -57,6 +57,9 @@ module MiW
 
     def proportion=(proportion)
       if @proportion != proportion
+        if proportion > range.size
+          raise ArgumentError, "proportion exceeds range.size: #{proportion} for (#{range})"
+        end
         @proportion = proportion
         invalidate
       end
@@ -240,7 +243,7 @@ module MiW
       if val < min
         val = min
       elsif val + @proportion > max
-        val = max - @proportion
+        val = range.end - @proportion
       end
       if step && step > 1
         m = val % step
