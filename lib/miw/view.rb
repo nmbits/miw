@@ -7,7 +7,7 @@ require 'set'
 module MiW
   class View
 
-    attr_reader :parent, :window, :id, :layout
+    attr_reader :parent, :window, :id, :layout, :view_point
     attr_accessor :font, :layout_hints
 
     DEFAULT_SIZE = Size.new(50, 50).freeze

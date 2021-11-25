@@ -7,21 +7,20 @@ module MiW
     RepeatInfo = Struct.new(:dir, :threshold)
 
     def initialize(id, orientation: :vertical, thickness: 16,
-                   range: (0...1000), value: 0, step: nil,
+                   min: 0, max: 1000, value: 0, step: nil,
                    proportion: 50, min_proportion: 50, size: nil, **opts)
-      super id, **opts
       unless VALID_ORIENTATION.include? orientation
         raise ArgumentError, "invalid orientation specified"
       end
+      super id, **opts
       @orientation = orientation
-      @proportion = proportion
       @min_proportion = min_proportion
+      @proportion = proportion
       @thickness = thickness
-      @range = range
-      @value = value
       @step = step
       @mouse_in = false
       @knob = Rectangle.new(0, 0, 0, 0)
+      set_range(min, max, value)
       if size
         resize_to size
       else
@@ -32,30 +31,53 @@ module MiW
         end
       end
     end
-    attr_reader :orientaion, :thickness, :range, :value, :step, :proportion
+    attr_reader :orientaion, :thickness, :min, :max, :value, :step, :proportion
 
-    def set_range(range, value)
-      @range = range
-      trigger :range_changed
-      @value = nil
+    def set_range(min, max, value)
+      unless min <= max
+        raise RangeError, "min should be less than or equal to max"
+      end
+      unless value >= min
+        raise RangeError, "value should be greater than or equal to min"
+      end
+      unless value <= max
+        raise RangeError, "value should be less than or equal to max"
+      end
+      @min, @max = min, max
       self.value = value
-    end
-
-    def range=(range)
-      val = range.include?(@value) ? @value : range.min
-      set_range range, val
+      update_knob
+      invalidate
     end
 
     def value=(value)
       if @value != value
+        unless value >= @min
+          raise RangeError, "value should be greater than or equal to min"
+        end
+        unless value <= @max
+          raise RangeError, "value should be less than or equal to max"
+        end
         @value = value
-        update_knob
         trigger :value_changed
+        update_knob
         invalidate
       end
     end
 
-    def proportion=(proportion)
+    def set_min_proportion(v)
+      unless v > 0
+        raise ArgumentError, "min_proportion should be greater than 0"
+      end
+      @min_proportion = v
+      if @proportion < @min_proportion
+        set_proportion(@min_proportion)
+      end
+    end
+
+    def set_proportion(proportion)
+      if proportion < @min_proportion
+        proportion = @min_proportion
+      end
       if @proportion != proportion
         @proportion = proportion
         update_knob
@@ -69,6 +91,7 @@ module MiW
 
     def frame_resized(w, h)
       update_knob
+      invalidate
     end
 
     def draw(rect)
@@ -103,11 +126,13 @@ module MiW
 
     def mouse_down(mx, my, button, status, count)
       if button == 1
-        if @orientation == :vertical
+        if vertical?
+          return unless height > 0
           top = @knob.top
           bottom = @knob.bottom
           mv = my
         else
+          return unless width > 0
           top = @knob.left
           bottom = @knob.right
           mv = mx
@@ -121,6 +146,11 @@ module MiW
     end
 
     def mouse_moved(mx, my, transit, data)
+      if vertical?
+        return unless height > 0
+      else
+        return unless width > 0
+      end
       prev = @mouse_in
       redraw = false
       case transit
@@ -130,8 +160,8 @@ module MiW
         @mouse_in = false
       end
       redraw = true if prev != @mouse_in
-      px = vertical? ? my : mx
       if dragging?
+        px = vertical? ? my : mx
         px_delta = px - @drag_start_px
         val_delta = px_to_val px_delta
         self.value = align_val @drag_start_val + val_delta
@@ -156,34 +186,33 @@ module MiW
     def scroll_page(dir)
       case dir
       when :backward
-        @value = [@range.min, @value - @proportion].max
+        self.value = [@min, @value - @proportion].max
       when :forward
-        p [@range.max, @proportion]
-        @value = [@range.max - @proportion, @value + @proportion].min
+        self.value = [@max - @proportion, @value + @proportion].min
       else
         return
       end
-      trigger :value_changed
-      update_knob
-      invalidate
     end
 
     private
 
-    def px_size
-      size = [(vertical? ? height : width), 1].max
-    end
-
     def val_to_px(value)
-      if @range.size > 0
-        value * px_size / @range.size
+      px_size = vertical? ? height : width
+      va_size = @max - @min
+      if va_size > 0
+        value * px_size / va_size
       else
-        0
+        px_size
       end
     end
 
     def px_to_val(px)
-      px * @range.size / px_size
+      px_size = vertical? ? height : width
+      if px_size > 0
+        px * (@max - @min) / px_size
+      else
+        @max
+      end
     end
 
     def update_knob
@@ -237,12 +266,11 @@ module MiW
     end
 
     def align_val(val)
-      min = range.min
-      max = range.max
-      if val < min
-        val = min
-      elsif val + @proportion > max
-        val = range.end - @proportion
+      if val + @proportion > @max
+        val = @max - @proportion
+      end
+      if val < @min
+        val = @min
       end
       if step && step > 1
         m = val % step

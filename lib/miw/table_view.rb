@@ -24,7 +24,6 @@ module MiW
       @cache = Util::Cache.new(10)
       @vs = VisualState.new
       self.dataset = dataset
-      reset_extent
     end
     attr_reader :show_label
 
@@ -36,10 +35,20 @@ module MiW
       @dataset = dataset
       @vs.reset_count @dataset.count
       @vs.set_root_data Hash.new
+      reset_extent
     end
 
     def calcurate_extent
-      Rectangle.new 0, 0, width, @vs.count * row_height
+      if show_label
+        h = @vs.count + 1
+      else
+        h = @vs.count
+      end
+      Rectangle.new 0, 0, width, h * row_height
+    end
+
+    def attached_to_window
+      reset_extent
     end
 
     def row_height
@@ -51,7 +60,6 @@ module MiW
     end
 
     def frame_resized(width, height)
-      reset_extent
       trigger :bounds_changed
     end
 
@@ -138,7 +146,6 @@ module MiW
         prev_subtree = nil
         prev_page = nil
         items = nil
-        p [:draw_rows, rect, current]
         @vs.each current do |state, subtree, sindex|
           if prev_subtree != subtree
             prev_subtree = subtree
@@ -157,7 +164,6 @@ module MiW
             parent = subtree.data[:parent]
             items = @dataset.get page * PAGE_SIZE, PAGE_SIZE, {parent: parent}
             cache[page] = items
-            p [:items, page, parent, items]
           end
           rindex = sindex % PAGE_SIZE
           item = items[rindex]

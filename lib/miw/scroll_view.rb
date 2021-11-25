@@ -83,19 +83,20 @@ module MiW
       if view == @target
         b = view.bounds
         s = @scroll_bars[:vertical]
-        s.proportion = b.height
+        s.set_proportion b.height
         s.value = b.top
         s = @scroll_bars[:horizontal]
-        s.proportion = b.width
+        s.set_proportion b.width
         s.value = b.left
       end
     end
 
     def extent_changed(view)
       if view == @target
-        ext = view.extent
-        @scroll_bars[:vertical].range   = (ext.top...ext.bottom)
-        @scroll_bars[:horizontal].range = (ext.left...ext.right)
+        e = view.extent
+        v = view.view_point
+        @scroll_bars[:vertical].set_range e.top, e.bottom, v.y
+        @scroll_bars[:horizontal].set_range e.left, e.right, v.x
       end
     end
 
