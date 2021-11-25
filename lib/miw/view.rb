@@ -22,8 +22,9 @@ module MiW
         raise TypeError, "id should be a Symbol or String."
       end
       @options = opts
-      @frame = MiW::Rectangle.new 0, 0, 0, 0
-      @frame.resize_to size || DEFAULT_SIZE
+      @pos = Point.new 0, 0
+      @view_point = Point.new 0, 0
+      @size = (size&.dup) || Size.new(0, 0)
       @children = []
       @visible = true
       if layout.class == Class
@@ -39,22 +40,28 @@ module MiW
     # geometry
 
     def bounds
-      @frame.dup.offset_to 0, 0
+      Rectangle.new(@view_point.x, @view_point.y,
+                    @size.width,   @size.height)
+    end
+
+    def view_port
+      @view_port
     end
 
     def frame
-      @frame.dup
+      Rectangle.new(@pos.x,      @pos.y,
+                    @size.width, @size.height)
     end
 
-    def x;            @frame.x            end
-    def y;            @frame.y            end
-    def width;        @frame.width        end
-    def height;       @frame.height       end
-    def size;         @frame.size         end
-    def left_top;     @frame.left_top     end
-    def left_bottom;  @frame.left_bottom  end
-    def right_top;    @frame.right_top    end
-    def right_bottom; @frame.right_bottom end
+    def x;            @pos.x       end
+    def y;            @pos.y       end
+    def width;        @size.width  end
+    def height;       @size.height end
+    def size;         @size.dup    end
+    def left_top;     @pos.dup     end
+    def left_bottom;  @pos.dup.offset_by 0,           @size.height end
+    def right_top;    @pos.dup.offset_by @size.width, 0            end
+    def right_bottom; @pos.dup.offset_by @size.width, @size.height end
 
     # size
 
@@ -179,17 +186,17 @@ module MiW
 
     def convert_to_parent(a1, a2 = nil)
       if a2
-        [a1 + @frame.x, a2 + @frame.y]
+        [a1 + @pos.x - @view_point.x, a2 + @pos.y - @view_point.y]
       else
-        a1.dup.offset_by @frame
+        a1.dup.offset_by(@pos).offset_by(-@view_point.x, -@view_point.y)
       end
     end
 
     def convert_from_parent(a1, a2 = nil)
       if a2
-        [a1 - @frame.x, a2 - @frame.y]
+        [a1 - @pos.x + @view_point.x, a2 - @pos.y + @view_point.y]
       else
-        a1.dup.offset_by 0 - @frame.x, 0 - @frame.y
+        a1.dup.offset_by(-@pos.x, -@pos.y).offset_by(@view_point)
       end
     end
 
@@ -281,6 +288,7 @@ module MiW
       else
         resize_to a1.width, a1.height
       end
+      nil
     end
 
     def resize_to(a1, a2 = nil)
@@ -291,18 +299,18 @@ module MiW
         # end
         w = [a1, 0, min.width].max
         h = [a2, 0, min.height].max
-        @frame.resize_to w, h
+        @size.resize_to w, h
       else
         # if a1.width < 0 || a1.height < 0
         #   raise ArgumentError, "size should be greater than or equal to 0"
         # end
         w = [a1.width, 0, min.width].max
         h = [a1.height, 0, min.height].max
-        @frame.resize_to w, h
+        @size.resize_to w, h
       end
       do_layout if @window
-      frame_resized @frame.width, @frame.height
-      @frame.size
+      frame_resized @size.width, @size.height
+      nil
     end
 
     def preferred_size
@@ -310,25 +318,27 @@ module MiW
     end
 
     def resize_to_preferred
-      sz = preferred_size
-      resize_to sz
+      resize_to preferred_size
     end
 
     def offset_by(a1, a2 = nil)
       if a2
-        offset_to @frame.x + a1, @frame.y + a2
+        offset_to @pos.x + a1, @pos.y + a2
       else
-        offset_to @frame.x + a1.x, @frame.y + a1.y
+        offset_to @pos.x + a1.x, @pos.y + a1.y
       end
+      nil
     end
 
     def offset_to(a1, a2 = nil)
       if a2
-        @frame.offset_to a1, a2
+        @pos.x = a1
+        @pos.y = a2
       else
-        @frame.offset_to a1.x, a1.y
+        @pos.x = a1.x
+        @pos.y = a1.y
       end
-      frame_moved(@frame.x, @frame.y)
+      frame_moved @pos.x, @pos.y
     end
 
     def root?
@@ -368,9 +378,9 @@ module MiW
 
     def view_at(x, y, visible_only = true)
       return nil if visible_only && hidden?
-      if @frame.contain? x, y
-        dx = x - @frame.x
-        dy = y - @frame.y
+      f = frame
+      if f.contain? x, y
+        dx, dy = convert_from_parent x, y
         v = nil
         each_child do |c|
           v = c.view_at dx, dy
@@ -428,16 +438,33 @@ module MiW
       end
     end
 
-    # view port
+    # extent, view point
+
     def extent
-      bounds
+      @extent ||= calcurate_extent
     end
 
-    def view_port
-      bounds
+    def calcurate_extent
+      ret = each_visible_child.inject nil do |result, c|
+        result ? result.union(c.frame) : c.frame
+      end
+      ret || Rectangle.new(0, 0, 0, 0)
+    end
+
+    def reset_extent
+      @extent = nil
+      trigger :extent_changed
     end
 
     def scroll_to(x, y)
+      px = @view_point.x
+      py = @view_point.y
+      @view_point.x = x
+      @view_point.y = y
+      if px != x || py != y
+        trigger :bounds_changed
+        invalidate
+      end
     end
 
     # mvc

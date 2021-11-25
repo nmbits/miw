@@ -21,8 +21,8 @@ module MiW
       @buffer.clear
       @buffer.insert 0, text
       @cursor = 0
-      trigger :extent_changed
-      trigger :view_port_changed
+      reset_extent
+      scroll_to 0, 0
     end
 
     def insert(text, offset = nil)

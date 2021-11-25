@@ -24,6 +24,7 @@ module MiW
       @cache = Util::Cache.new(10)
       @vs = VisualState.new
       self.dataset = dataset
+      reset_extent
     end
     attr_reader :show_label
 
@@ -37,24 +38,8 @@ module MiW
       @vs.set_root_data Hash.new
     end
 
-    def extent
-      Rectangle.new 0, 0, 100, @vs.count * row_height
-    end
-
-    def view_port
-      visible_height = height - (@show_label ? row_height : 0)
-      content_height = @vs.count * row_height
-      h = visible_height < content_height ? visible_height : content_height
-      Rectangle.new 0, @current * row_height, 100, h
-    end
-
-    def scroll_to(x, y)
-      raise ArgumentError, "invalid x, y: #{x}, #{y}" if y < 0 || x < 0
-      if row_height > 0
-        @current = y / row_height
-        @mod = y % row_height
-        invalidate
-      end
+    def calcurate_extent
+      Rectangle.new 0, 0, width, @vs.count * row_height
     end
 
     def row_height
@@ -65,18 +50,9 @@ module MiW
       row_height
     end
 
-    def scroll_bars_rect
-      rect = bounds
-      if @show_label
-        rect.height -= row_height
-        rect.y += row_height
-      end
-      rect
-    end
-
     def frame_resized(width, height)
-      trigger :extent_changed
-      trigger :view_port_changed
+      reset_extent
+      trigger :bounds_changed
     end
 
     def each_visible_columns
@@ -104,12 +80,16 @@ module MiW
 
     def draw(rect)
       if show_label
-        rect_label = Rectangle.new 0, 0, width, row_height
-        rect_rows = Rectangle.new 0, row_height, width, rect.height - row_height
+        rect_label = bounds
+        rect_label.height = row_height
+        draw_labels rect_label
+
+        rect_rows = bounds
+        rect_rows.y += row_height
+        rect_rows.height -= row_height
       else
-        rect_rows = rect
+        rect_rows = bounds
       end
-      draw_labels rect_label if show_label
       draw_rows rect_rows
       cairo.save do
         cairo.set_source_rgb 0.3, 0.3, 0.3 # pseudo
@@ -147,11 +127,19 @@ module MiW
         cairo.set_source_color MiW.colors[:control_background]
         cairo.fill
 
-        rect_item = Rectangle.new rect.x, rect.y - @mod, rect.width, row_height
+        if show_label
+          current = (rect.y - row_height) / row_height
+        else
+          current = rect.y / row_height
+        end
+        mod = rect.y % row_height
+
+        rect_item = Rectangle.new rect.x, rect.y - mod, rect.width, row_height
         prev_subtree = nil
         prev_page = nil
         items = nil
-        @vs.each(@current) do |state, subtree, sindex|
+        p [:draw_rows, rect, current]
+        @vs.each current do |state, subtree, sindex|
           if prev_subtree != subtree
             prev_subtree = subtree
             prev_page = nil
@@ -169,6 +157,7 @@ module MiW
             parent = subtree.data[:parent]
             items = @dataset.get page * PAGE_SIZE, PAGE_SIZE, {parent: parent}
             cache[page] = items
+            p [:items, page, parent, items]
           end
           rindex = sindex % PAGE_SIZE
           item = items[rindex]
@@ -234,7 +223,7 @@ module MiW
     end
 
     def y_to_row(y)
-      answer = (y + @mod) / row_height + @current
+      answer = y / row_height
       # p [:y_to_row, @current, y, @mod, answer]
       answer -= 1 if show_label
       answer < 0 || answer >= @vs.count ? nil : answer
@@ -265,8 +254,8 @@ module MiW
       else
         @vs.close(row)
       end
+      reset_extent
       invalidate
-      trigger :extent_changed
     end
   end
 end

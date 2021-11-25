@@ -44,7 +44,7 @@ module MiW
       @target = view
       @target&.add_observer self
       extent_changed @target
-      view_port_changed @target
+      bounds_changed @target
     end
 
     def add_child(child, hints = {})
@@ -68,36 +68,34 @@ module MiW
     end
 
     def value_changed(scroll_bar)
+      return unless @target
       value = scroll_bar.value
+      b = @target.bounds
       case scroll_bar.id
       when @scroll_bars[:vertical].id
-        @target.scroll_to view_port.x, value
+        @target.scroll_to b.x, value if value != b.y
       when @scroll_bars[:horizontal].id
-        @target.scroll_to value, view_port.y
+        @target.scroll_to value, b.y if value != b.x
       end
     end
 
-    def view_port_changed(view)
+    def bounds_changed(view)
       if view == @target
-        vp = view.view_port
+        b = view.bounds
         s = @scroll_bars[:vertical]
-        s.proportion = vp.height
-        s.value = vp.top
+        s.proportion = b.height
+        s.value = b.top
         s = @scroll_bars[:horizontal]
-        s.proportion = vp.width
-        s.value = vp.left
+        s.proportion = b.width
+        s.value = b.left
       end
     end
 
     def extent_changed(view)
       if view == @target
         ext = view.extent
-        range = (ext.top...ext.bottom)
-        s = @scroll_bars[:vertical]
-        s.range = range
-        s = @scroll_bars[:horizontal]
-        range = (ext.left...ext.right)
-        s.range = range
+        @scroll_bars[:vertical].range   = (ext.top...ext.bottom)
+        @scroll_bars[:horizontal].range = (ext.left...ext.right)
       end
     end
 

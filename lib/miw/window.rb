@@ -189,8 +189,9 @@ module MiW
       return unless intr.valid?
       @cairo.save { view.draw intr }
       view.each_visible_child do |child|
+        dx, dy = child.convert_to_parent 0, 0
         @cairo.save do
-          @cairo.translate child.x, child.y
+          @cairo.translate dx, dy
           draw_recursive child, child.convert_from_parent(intr)
         end
       end

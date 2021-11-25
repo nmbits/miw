@@ -4,7 +4,6 @@ module MiW
   class ScrollBar < View
 
     VALID_ORIENTATION = [:vertical, :horizontal]
-
     RepeatInfo = Struct.new(:dir, :threshold)
 
     def initialize(id, orientation: :vertical, thickness: 16,
@@ -51,16 +50,15 @@ module MiW
       if @value != value
         @value = value
         update_knob
+        trigger :value_changed
         invalidate
       end
     end
 
     def proportion=(proportion)
       if @proportion != proportion
-        if proportion > range.size
-          raise ArgumentError, "proportion exceeds range.size: #{proportion} for (#{range})"
-        end
         @proportion = proportion
+        update_knob
         invalidate
       end
     end
@@ -72,7 +70,7 @@ module MiW
     def frame_resized(w, h)
       update_knob
     end
-    
+
     def draw(rect)
       # fill frame
       cs = MiW.colors
@@ -160,6 +158,7 @@ module MiW
       when :backward
         @value = [@range.min, @value - @proportion].max
       when :forward
+        p [@range.max, @proportion]
         @value = [@range.max - @proportion, @value + @proportion].min
       else
         return
