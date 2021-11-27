@@ -118,8 +118,8 @@ module MiW
       end
       sc = @scroll_bars[:horizontal]
       if sc.visible?
-        sc.offset_to rect.left, recto.bottom
-        sc.resize_to rect.width, rect.thickness
+        sc.offset_to rect.left, rect.bottom
+        sc.resize_to rect.width, sc.thickness
       end
       if @corner && @corner.visible?
         @corner.offset_to rect.right, rect.bottom
