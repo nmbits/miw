@@ -75,7 +75,6 @@ module MiW
 
     def calcurate_extent
       h = attached? ? font_pixel_height : 1
-      p [__callee__, font_pixel_height]
       v = @visible_lines || 0
       hidden_lines = @buffer.count_lines - @visible_lines
       if hidden_lines < 0
@@ -222,7 +221,6 @@ module MiW
     end
 
     def scroll_to(x, y)
-      p [__callee__, x, y]
       if attached?
         @top_linum = y / font_pixel_height
         update_pango_layout_all
@@ -237,7 +235,6 @@ module MiW
         @visible_lines = 0
         @layouts = []
         cy = 0
-        p [__callee__, @top_linum]
         (@top_linum ... @buffer.count_lines).each do |linum|
           index = @buffer.line_to_pos(linum)
           len = @buffer.end_of_line(index) - index
