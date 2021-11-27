@@ -6,14 +6,13 @@ require 'pango'
 
 module MiW
   class TextView < View
-    def initialize(id, font: nil, **opts)
+    def initialize(id, font: MiW.fonts[:monospace], **opts)
       super
       @layouts = []
       @top_linum = 0
       @visible_lines = 0
       @buffer = MiW::Model::TextBuffer.new
       @cursor = 0
-      self.font = font || MiW.fonts[:monospace]
     end
 
     def set_text(text)
@@ -74,12 +73,16 @@ module MiW
     def offset_at(point_or_offset)
     end
 
-    def extent
-      Rectangle.new 0, 0, 100, @buffer.count_lines
-    end
-
-    def view_port
-      Rectangle.new 0, @top_linum, 100, @visible_lines
+    def calcurate_extent
+      h = attached? ? font_pixel_height : 1
+      p [__callee__, font_pixel_height]
+      v = @visible_lines || 0
+      hidden_lines = @buffer.count_lines - @visible_lines
+      if hidden_lines < 0
+        hidden_lines = 0
+      end
+      hidden_pixel = h * hidden_lines
+      Rectangle.new 0, 0, width, height + hidden_pixel
     end
 
     # cursor motion
@@ -138,10 +141,14 @@ module MiW
     #################################
     # Hooks
 
+    def attached_to_window
+      reset_extent
+    end
+
     def draw(rect)
       cs = MiW.colors
       cairo.save do
-        cairo.rectangle 0, 0, width + 1, height + 1
+        cairo.rectangle view_point.x, view_point.y, width + 1, height + 1
         cairo.clip
         update_pango_layout_all if @layouts.empty?
         fill_rect(cs, rect)
@@ -163,12 +170,12 @@ module MiW
       when KeySym::ENTER
         @buffer.insert @cursor, "\n"
         update_pango_layout_all
-        trigger :extent_changed
+        reset_extent
         @cursor += 1
         follow_cursor
       when KeySym::BACKSPACE
         backspace
-        trigger :extent_changed
+        reset_extent
         follow_cursor
       when 0..0x100
         c = key.chr
@@ -185,9 +192,10 @@ module MiW
       make_focus true
       cur = 10 # pseudo
       row = nil
+      cx, cy = convert_to_parent x, y
       @layouts.each_with_index do |layout, i|
         width, height = layout.pixel_size
-        if y < cur + height
+        if cy < cur + height
           row = i
           break
         end
@@ -196,8 +204,8 @@ module MiW
       if row
         linum = @top_linum + row
         layout = @layouts[row]
-        lx = x
-        ly = y - cur
+        lx = cx
+        ly = cy - cur
         ans = layout.xy_to_index(lx * Pango::SCALE, ly * Pango::SCALE)
         inside, index, trailing = ans
         @cursor = @buffer.line_to_pos(linum) + index
@@ -209,13 +217,17 @@ module MiW
     def frame_resized(width, height)
       if window
         update_pango_layout_all
-        trigger :view_port_changed
+        trigger :bounds_changed
       end
     end
 
     def scroll_to(x, y)
-      @top_linum = [0, y].max
-      update_pango_layout_all
+      p [__callee__, x, y]
+      if attached?
+        @top_linum = y / font_pixel_height
+        update_pango_layout_all
+      end
+      super
     end
 
     private
@@ -225,6 +237,7 @@ module MiW
         @visible_lines = 0
         @layouts = []
         cy = 0
+        p [__callee__, @top_linum]
         (@top_linum ... @buffer.count_lines).each do |linum|
           index = @buffer.line_to_pos(linum)
           len = @buffer.end_of_line(index) - index
@@ -248,7 +261,8 @@ module MiW
     end
 
     def draw_text(cs, rect)
-      cx = cy = 0
+      cx = bounds.x
+      cy = bounds.y
       @layouts.each_with_index do |layout, i|
         width, height = layout.pixel_size
         layout_rect = Rectangle.new(cx, cy, width, height)
@@ -267,7 +281,8 @@ module MiW
       line_index = @buffer.line_to_pos linum
       rindex = index - line_index
       row = linum - @top_linum
-      cx = cy = 0
+      cx = bounds.x
+      cy = bounds.y
       @layouts.each_with_index do |layout, i|
         if i == row
           strong_pos, weak_pos = layout.get_cursor_pos(rindex)
@@ -285,13 +300,17 @@ module MiW
     end
 
     def follow_cursor
+      h = attached? ? font_pixel_height : 1
       linum = @buffer.pos_to_line @cursor
       if linum < @top_linum
-        scroll_to 0, linum - @visible_lines / 2
-        trigger :view_port_changed
+        l = (linum - @visible_lines / 2) * h
+        if l >= 0
+          scroll_to 0, (linum - @visible_lines / 2) * h
+          trigger :bounds_changed
+        end
       elsif linum >= @top_linum + @visible_lines
-        scroll_to 0, @top_linum + @visible_lines / 2
-        trigger :view_port_changed
+        scroll_to 0, (@top_linum + @visible_lines / 2) * h
+        trigger :bounds_changed
       end
     end
   end
