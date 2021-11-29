@@ -10,7 +10,11 @@ module MiW
     end
 
     def draw(rect)
-      cairo.set_source_rgb(0, 0, 0)
+      cs = MiW.colors
+      cairo.rectangle rect.x, rect.y, rect.width, rect.height
+      cairo.set_source_color cs[:control_background]
+      cairo.fill
+      cairo.set_source_color cs[:control_forground]
       cairo.show_pango_layout pango_layout
       cairo.rectangle 0, 0, width, height
       cairo.stroke
