@@ -54,12 +54,14 @@ module MiW
     def union(*a)
       case a.length
       when 1
-        oleft, otop, oright, obottom = a.first.to_a
+        oleft, otop, w, h = a.first.to_a
       when 4
-        oleft, otop, oright, obottom = *a
+        oleft, otop, w, h = *a
       else
         raise ArgumentError
       end
+      oright = oleft + w
+      obottom = otop + h
       nleft   = left   < oleft   ? left   : oleft
       ntop    = top    < otop    ? top    : otop
       nright  = right  > oright  ? right  : oright
