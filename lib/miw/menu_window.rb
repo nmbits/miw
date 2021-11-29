@@ -13,7 +13,8 @@ module MiW
     attr_reader :menu
 
     def shown
-      size = menu.resize_to_preferred
+      menu.resize_to_preferred
+      size = menu.size
       resize_to size.width, size.height
     end
   end
