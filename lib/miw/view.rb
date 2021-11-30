@@ -44,10 +44,6 @@ module MiW
                     @size.width,   @size.height)
     end
 
-    def view_port
-      @view_port
-    end
-
     def frame
       Rectangle.new(@pos.x,      @pos.y,
                     @size.width, @size.height)
@@ -310,6 +306,7 @@ module MiW
       end
       do_layout if @window
       frame_resized @size.width, @size.height
+      trigger :bounds_changed
       nil
     end
 
@@ -436,24 +433,6 @@ module MiW
         end
         invalidate if changed
       end
-    end
-
-    # extent, view point
-
-    def extent
-      @extent ||= calcurate_extent
-    end
-
-    def calcurate_extent
-      ret = each_visible_child.inject nil do |result, c|
-        result ? result.union(c.frame) : c.frame
-      end
-      ret || Rectangle.new(0, 0, 0, 0)
-    end
-
-    def reset_extent
-      @extent = nil
-      trigger :extent_changed
     end
 
     def scroll_to(x, y)

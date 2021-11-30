@@ -20,7 +20,7 @@ module MiW
       @buffer.clear
       @buffer.insert 0, text
       @cursor = 0
-      reset_extent
+      trigger :extent_changed
       scroll_to 0, 0
     end
 
@@ -73,7 +73,7 @@ module MiW
     def offset_at(point_or_offset)
     end
 
-    def calcurate_extent
+    def extent
       h = attached? ? font_pixel_height : 1
       v = @visible_lines || 0
       hidden_lines = @buffer.count_lines - @visible_lines
@@ -141,7 +141,7 @@ module MiW
     # Hooks
 
     def attached_to_window
-      reset_extent
+      trigger :extent_changed
     end
 
     def draw(rect)
@@ -169,12 +169,12 @@ module MiW
       when KeySym::ENTER
         @buffer.insert @cursor, "\n"
         update_pango_layout_all
-        reset_extent
+        trigger :extent_changed
         @cursor += 1
         follow_cursor
       when KeySym::BACKSPACE
         backspace
-        reset_extent
+        trigger :extent_changed
         follow_cursor
       when 0..0x100
         c = key.chr
@@ -216,7 +216,6 @@ module MiW
     def frame_resized(width, height)
       if window
         update_pango_layout_all
-        trigger :bounds_changed
       end
     end
 

@@ -75,7 +75,7 @@ module MiW
       tr = nil
       if @grabbing_view
         view = view_at(x, y)
-        tr = (view == @grabbinv_view ?
+        tr = (view == @grabbing_view ?
                 (@last_view == @grabbing_view ? :inside : :entered) :
                 (@last_view == @grabbing_view ? :exited : :outside))
         @last_view = view

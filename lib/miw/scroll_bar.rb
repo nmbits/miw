@@ -2,25 +2,23 @@ require 'miw/view'
 
 module MiW
   class ScrollBar < View
+    autoload :DefaultModel,      'miw/scroll_bar/default_model'
+    autoload :ExtentBoundsModel, 'miw/scroll_bar/extent_bounds_model'
 
     VALID_ORIENTATION = [:vertical, :horizontal]
     RepeatInfo = Struct.new(:dir, :threshold)
 
     def initialize(id, orientation: :vertical, thickness: 16,
-                   min: 0, max: 1000, value: 0, step: nil,
-                   proportion: 50, min_proportion: 50, size: nil, **opts)
+                   model: DefaultModel.new, size: nil, **opts)
       unless VALID_ORIENTATION.include? orientation
         raise ArgumentError, "invalid orientation specified"
       end
       super id, **opts
-      @orientation = orientation
-      @min_proportion = min_proportion
-      @proportion = proportion
-      @thickness = thickness
-      @step = step
-      @mouse_in = false
       @knob = Rectangle.new(0, 0, 0, 0)
-      set_range(min, max, value)
+      @orientation = orientation
+      @thickness = thickness
+      @mouse_in = false
+      self.model = model
       if size
         resize_to size
       else
@@ -31,62 +29,21 @@ module MiW
         end
       end
     end
-    attr_reader :orientaion, :thickness, :min, :max, :value, :step, :proportion
+    attr_reader :orientaion, :thickness, :model
 
-    def set_range(min, max, value)
-      unless min <= max
-        raise RangeError, "min should be less than or equal to max"
-      end
-      unless value >= min
-        raise RangeError, "value should be greater than or equal to min"
-      end
-      unless value <= max
-        raise RangeError, "value should be less than or equal to max"
-      end
-      @min, @max = min, max
-      self.value = value
+    def model=(m)
+      @model = m
       update_knob
       invalidate
     end
 
-    def value=(value)
-      if @value != value
-        unless value >= @min
-          raise RangeError, "value should be greater than or equal to min"
-        end
-        unless value <= @max
-          raise RangeError, "value should be less than or equal to max"
-        end
-        @value = value
-        trigger :value_changed
-        update_knob
-        invalidate
-      end
-    end
-
-    def set_min_proportion(v)
-      unless v > 0
-        raise ArgumentError, "min_proportion should be greater than 0"
-      end
-      @min_proportion = v
-      if @proportion < @min_proportion
-        set_proportion(@min_proportion)
-      end
-    end
-
-    def set_proportion(proportion)
-      if proportion < @min_proportion
-        proportion = @min_proportion
-      end
-      if @proportion != proportion
-        @proportion = proportion
-        update_knob
-        invalidate
-      end
-    end
-
     def vertical?
       @orientation == :vertical
+    end
+
+    def update
+      update_knob
+      invalidate
     end
 
     def frame_resized(w, h)
@@ -164,8 +121,7 @@ module MiW
         px = vertical? ? my : mx
         px_delta = px - @drag_start_px
         val_delta = px_to_val px_delta
-        self.value = align_val @drag_start_val + val_delta
-        trigger :value_changed
+        @model.value = align_val @drag_start_val + val_delta
         update_knob
         redraw = true
       end
@@ -186,19 +142,20 @@ module MiW
     def scroll_page(dir)
       case dir
       when :backward
-        self.value = [@min, @value - @proportion].max
+        @model.value = [@model.min, @model.value - @model.proportion].max
       when :forward
-        self.value = [@max - @proportion, @value + @proportion].min
+        @model.value = [@model.max - @model.proportion, @model.value + @model.proportion].min
       else
         return
       end
+      invalidate
     end
 
     private
 
     def val_to_px(value)
       px_size = vertical? ? height : width
-      va_size = @max - @min
+      va_size = @model.max - @model.min
       if va_size > 0
         value * px_size / va_size
       else
@@ -209,22 +166,22 @@ module MiW
     def px_to_val(px)
       px_size = vertical? ? height : width
       if px_size > 0
-        px * (@max - @min) / px_size
+        px * (@model.max - @model.min) / px_size
       else
-        @max
+        @model.max
       end
     end
 
     def update_knob
       if vertical?
         w = width * 0.6
-        h = val_to_px @proportion
+        h = val_to_px @model.proportion
         kx = width * 0.2
-        ky = val_to_px @value
+        ky = val_to_px @model.value
       else
-        w = val_to_px @proportion
+        w = val_to_px @model.proportion
         h = height * 0.6
-        kx = val_to_px @value
+        kx = val_to_px @model.value
         ky = height * 0.2
       end
       @knob.offset_to kx, ky
@@ -235,7 +192,7 @@ module MiW
     def start_dragging(mx, my)
       grab_input
       @drag_start_px = vertical? ? my : mx
-      @drag_start_val = value
+      @drag_start_val = @model.value
     end
 
     def end_dragging
@@ -266,14 +223,15 @@ module MiW
     end
 
     def align_val(val)
-      if val + @proportion > @max
-        val = @max - @proportion
+      if val + @model.proportion > @model.max
+        val = @model.max - @model.proportion
       end
-      if val < @min
-        val = @min
+      if val < @model.min
+        val = @model.min
       end
-      if step && step > 1
-        m = val % step
+      if @model.step && @model.step > 1
+        # todo
+        m = val % @model.step
         val -= m
         val += step if m > step / 2
       end
@@ -282,8 +240,8 @@ module MiW
 
     def repeat_scroll_page
       if @repeat_info
-        if (@repeat_info.dir == :forward && @value + @proportion < @repeat_info.threshold) ||
-           (@repeat_info.dir == :backward && @value > @repeat_info.threshold)
+        if (@repeat_info.dir == :forward && @model.value + @model.proportion < @repeat_info.threshold) ||
+           (@repeat_info.dir == :backward && @model.value > @repeat_info.threshold)
           scroll_page @repeat_info.dir
           EM.add_timer 0.05, method(:repeat_scroll_page)
         end

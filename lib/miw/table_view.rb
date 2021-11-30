@@ -35,10 +35,10 @@ module MiW
       @dataset = dataset
       @vs.reset_count @dataset.count
       @vs.set_root_data Hash.new
-      reset_extent
+      trigger :extent_changed
     end
 
-    def calcurate_extent
+    def extent
       if show_label
         h = @vs.count + 1
       else
@@ -48,7 +48,7 @@ module MiW
     end
 
     def attached_to_window
-      reset_extent
+      trigger :extent_changed
     end
 
     def row_height
@@ -57,10 +57,6 @@ module MiW
 
     def expander_width
       row_height
-    end
-
-    def frame_resized(width, height)
-      trigger :bounds_changed
     end
 
     def each_visible_columns
@@ -260,7 +256,7 @@ module MiW
       else
         @vs.close(row)
       end
-      reset_extent
+      trigger :extent_changed
       invalidate
     end
   end

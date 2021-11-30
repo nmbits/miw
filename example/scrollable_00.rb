@@ -7,13 +7,14 @@ if __FILE__ == $0
 
   class Check < MiW::View
     BOX_SIZE = 20
-    EXTENT_SIZE = 500
+    EXTENT_SIZE = 2000
     def initialize(id)
       super id
+      @extent = MiW::Rectangle.new 0, 0, EXTENT_SIZE, EXTENT_SIZE
     end
 
-    def calcurate_extent
-      MiW::Rectangle.new 0, 0, EXTENT_SIZE, EXTENT_SIZE
+    def extent
+      @extent
     end
 
     def adjust_view_point(x, y)
@@ -34,13 +35,12 @@ if __FILE__ == $0
       x, y = adjust_view_point view_point.x, view_point.y
       if x != view_point.x || y != view_point.y
         scroll_to x, y
+      else
+        trigger :bounds_changed
       end
-      trigger :bounds_changed
-      invalidate
     end
 
     def mouse_down(mx, my, button, status, count)
-      p button
       case button
       when 1
         grab_input
@@ -65,8 +65,6 @@ if __FILE__ == $0
         y = view_point.y + dy
         x, y = adjust_view_point(x, y)
         scroll_to x, y
-        trigger :bounds_changed
-        invalidate
       end
     end
 

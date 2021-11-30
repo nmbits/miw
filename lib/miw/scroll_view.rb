@@ -6,27 +6,18 @@ module MiW
     def initialize(id, target: nil, target_hints: {}, corner: nil,
                    horizontal: false, vertical: false, **opts)
       super id, **opts
-      if target
-        set_target target, target_hints
-        @target = target
+      @scroll_bars = {}
+      [[:horizontal, horizontal],[:vertical, vertical]].each do |o, v|
+        sb = ScrollBar.new "__miw_#{id}_sb_#{o}".to_sym, orientation: o
+        add_child sb
+        sb.show v
+        @scroll_bars[o] = sb
       end
+      set_target target, target_hints if target
       if corner
         add_child corner
         @corner = corner
       end
-      @scroll_bars = {}
-      @scroll_bar_ids = []
-      sb = ScrollBar.new "__miw_#{id}_h".to_sym, orientation: :horizontal
-      add_child sb
-      sb.add_observer self
-      sb.show horizontal
-      @scroll_bars[:horizontal] = sb
-      sb = ScrollBar.new "__miw_#{id}_v", orientation: :vertical
-      add_child sb
-      sb.add_observer self
-      sb.show vertical
-      @scroll_bars[:vertical] = sb
-      @scroll_bar_ids = @scroll_bars.values.map{|v| v.id}
     end
 
     def set_target(view, hints = {})
@@ -40,20 +31,28 @@ module MiW
           add_child view, hints
         end
       end
+      if view
+        model_h = ScrollBar::ExtentBoundsModel.new view, :horizontal
+        model_v = ScrollBar::ExtentBoundsModel.new view, :vertical
+      else
+        model_h = ScrollBar::DefaultModel.new
+        model_v = ScrollBar::DefaultModel.new
+      end
+      @scroll_bars[:horizontal].model = model_h
+      @scroll_bars[:vertical].model = model_v
       @target&.remove_observer self
       @target = view
       @target&.add_observer self
-      extent_changed @target
-      bounds_changed @target
+      update_scroll_bars
     end
 
     def add_child(child, hints = {})
-      raise ArgumentError, "invalid id" if @scroll_bar_ids.include? child.id
+      raise ArgumentError, "invalid id" if @scroll_bars.find{|k, v| child.id == v.id }
       super
     end
 
     def remove_child(child)
-      raise ArgumentError, "invalid id" if @scroll_bar_ids.include? child.id
+      raise ArgumentError, "invalid id" if @scroll_bars.find{|k, v| child.id == v.id }
       @target.remove_observer self if @target && child == @target
       super
     end
@@ -67,37 +66,17 @@ module MiW
       end
     end
 
-    def value_changed(scroll_bar)
-      return unless @target
-      value = scroll_bar.value
-      b = @target.bounds
-      case scroll_bar.id
-      when @scroll_bars[:vertical].id
-        @target.scroll_to b.x, value if value != b.y
-      when @scroll_bars[:horizontal].id
-        @target.scroll_to value, b.y if value != b.x
-      end
+    def update_scroll_bars
+      @scroll_bars[:vertical].update
+      @scroll_bars[:horizontal].update
     end
 
     def bounds_changed(view)
-      if view == @target
-        b = view.bounds
-        s = @scroll_bars[:vertical]
-        s.set_proportion b.height
-        s.value = b.top
-        s = @scroll_bars[:horizontal]
-        s.set_proportion b.width
-        s.value = b.left
-      end
+      update_scroll_bars
     end
 
     def extent_changed(view)
-      if view == @target
-        e = view.extent
-        v = view.view_point
-        @scroll_bars[:vertical].set_range e.top, e.bottom, v.y
-        @scroll_bars[:horizontal].set_range e.left, e.right, v.x
-      end
+      update_scroll_bars
     end
 
     def do_layout
