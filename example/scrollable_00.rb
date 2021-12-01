@@ -2,6 +2,7 @@
 require 'bundler/setup'
 require 'miw'
 require 'miw/scroll_view'
+require 'miw/resizer_view'
 
 if __FILE__ == $0
 
@@ -107,7 +108,11 @@ if __FILE__ == $0
   m.add_item MiW::MenuItem.new("Edit")
   w.add_child m, resize: [true, false]
 
-  sv = MiW::ScrollView.new :scroll, layout: MiW::Layout::VBox, vertical: true, horizontal: true
+  rv = MiW::ResizerView.new :resizer
+
+  sv = MiW::ScrollView.new :scroll, layout: MiW::Layout::VBox,
+                           vertical: true, horizontal: true,
+                           corner: rv
 
   v = Check.new :v
   sv.set_target v, resize: [true, true]
