@@ -6,14 +6,20 @@ require 'pango'
 
 module MiW
   class TextView < View
-    def initialize(id, font: MiW.fonts[:monospace], **opts)
+    def initialize(id, buffer: MiW::Model::TextBuffer.new,
+                   font: MiW.fonts[:monospace], **opts)
       super
       @layouts = []
       @top_linum = 0
       @visible_lines = 0
-      @buffer = MiW::Model::TextBuffer.new
-      @buffer.add_observer self
       @cursor = 0
+      set_buffer buffer
+    end
+
+    def set_buffer(buffer)
+      @buffer.delete_observer self if @buffer
+      @buffer = buffer
+      @buffer.add_observer self
     end
 
     def set_text(text)
@@ -227,6 +233,8 @@ module MiW
     end
 
     def update
+      @cursor = @buffer.length if @cursor > @buffer.length
+      notify :extent_changed
       update_pango_layout_all
     end
 
