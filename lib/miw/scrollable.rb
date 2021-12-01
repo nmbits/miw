@@ -12,7 +12,6 @@ module MiW
       range = (extent.left...extent.right)
       scroll_bar.set_range range, view_port.left
       scroll_bar.proportion = view_port.width
-      scroll_bar.add_observer self
       add_child scroll_bar
       scroll_bar.show horizontal
       @__miw_scrollable_h_sc = scroll_bar
@@ -21,7 +20,6 @@ module MiW
       range = (extent.top...extent.bottom)
       scroll_bar.set_range range, view_port.top
       scroll_bar.proportion = view_port.height
-      scroll_bar.add_observer self
       add_child scroll_bar
       scroll_bar.show vertical
       @__miw_scrollable_v_sc = scroll_bar

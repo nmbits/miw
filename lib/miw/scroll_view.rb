@@ -40,9 +40,7 @@ module MiW
       end
       @scroll_bars[:horizontal].model = model_h
       @scroll_bars[:vertical].model = model_v
-      @target&.remove_observer self
       @target = view
-      @target&.add_observer self
       update_scroll_bars
     end
 
@@ -71,12 +69,13 @@ module MiW
       @scroll_bars[:horizontal].update
     end
 
-    def bounds_changed(view)
-      update_scroll_bars
-    end
-
-    def extent_changed(view)
-      update_scroll_bars
+    def receive(view, what, *args)
+      if view == @target
+        case what
+        when :bounds_changed, :extent_changed
+          update_scroll_bars
+        end
+      end
     end
 
     def do_layout

@@ -306,7 +306,7 @@ module MiW
       end
       do_layout if @window
       frame_resized @size.width, @size.height
-      trigger :bounds_changed
+      notify :bounds_changed
       nil
     end
 
@@ -441,24 +441,17 @@ module MiW
       @view_point.x = x
       @view_point.y = y
       if px != x || py != y
-        trigger :bounds_changed
+        notify :bounds_changed
         invalidate
       end
     end
 
-    # mvc
-    def trigger(sym, *args)
-      @observers.each do |o|
-        o.__send__(sym, self, *args) if o.respond_to? sym
+    def notify(sym, *args)
+      target = self.parent
+      while target && !target.root?
+        target.receive self, sym, *args if target.respond_to? :receive
+        target = target.parent
       end
-    end
-
-    def add_observer(observer)
-      @observers.add observer
-    end
-
-    def remove_observer(observer)
-      @observers.delete observer
     end
 
     # font

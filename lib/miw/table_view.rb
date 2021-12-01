@@ -35,7 +35,7 @@ module MiW
       @dataset = dataset
       @vs.reset_count @dataset.count
       @vs.set_root_data Hash.new
-      trigger :extent_changed
+      notify :extent_changed
     end
 
     def extent
@@ -48,7 +48,7 @@ module MiW
     end
 
     def attached_to_window
-      trigger :extent_changed
+      notify :extent_changed
     end
 
     def row_height
@@ -256,7 +256,7 @@ module MiW
       else
         @vs.close(row)
       end
-      trigger :extent_changed
+      notify :extent_changed
       invalidate
     end
   end

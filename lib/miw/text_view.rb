@@ -20,7 +20,7 @@ module MiW
       @buffer.clear
       @buffer.insert 0, text
       @cursor = 0
-      trigger :extent_changed
+      notify :extent_changed
       scroll_to 0, 0
     end
 
@@ -141,7 +141,7 @@ module MiW
     # Hooks
 
     def attached_to_window
-      trigger :extent_changed
+      notify :extent_changed
     end
 
     def draw(rect)
@@ -169,12 +169,12 @@ module MiW
       when KeySym::ENTER
         @buffer.insert @cursor, "\n"
         update_pango_layout_all
-        trigger :extent_changed
+        notify :extent_changed
         @cursor += 1
         follow_cursor
       when KeySym::BACKSPACE
         backspace
-        trigger :extent_changed
+        notify :extent_changed
         follow_cursor
       when 0..0x100
         c = key.chr
@@ -302,11 +302,11 @@ module MiW
         l = (linum - @visible_lines / 2) * h
         if l >= 0
           scroll_to 0, (linum - @visible_lines / 2) * h
-          trigger :bounds_changed
+          notify :bounds_changed
         end
       elsif linum >= @top_linum + @visible_lines
         scroll_to 0, (@top_linum + @visible_lines / 2) * h
-        trigger :bounds_changed
+        notify :bounds_changed
       end
     end
   end
