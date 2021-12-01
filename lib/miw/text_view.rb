@@ -12,16 +12,17 @@ module MiW
       @top_linum = 0
       @visible_lines = 0
       @buffer = MiW::Model::TextBuffer.new
+      @buffer.add_observer self
       @cursor = 0
     end
 
     def set_text(text)
       text ||= ""
+      @cursor = 0
       @buffer.clear
       @buffer.insert 0, text
-      @cursor = 0
-      notify :extent_changed
       scroll_to 0, 0
+      notify :extent_changed
     end
 
     def insert(text, offset = nil)
@@ -129,11 +130,9 @@ module MiW
       if @cursor > 0
         new_cursor = @buffer.adjust @cursor - 1, :backward
         len = @cursor - new_cursor
-        @buffer.delete(new_cursor, len)
         @cursor = new_cursor
         @column = nil
-        update_pango_layout_all
-        invalidate
+        @buffer.delete(new_cursor, len)
       end
     end
 
@@ -167,10 +166,10 @@ module MiW
       when KeySym::DOWN
         move_cursor :down
       when KeySym::ENTER
-        @buffer.insert @cursor, "\n"
-        update_pango_layout_all
-        notify :extent_changed
+        tmp = @cursor
         @cursor += 1
+        @buffer.insert tmp, "\n"
+        notify :extent_changed
         follow_cursor
       when KeySym::BACKSPACE
         backspace
@@ -178,9 +177,9 @@ module MiW
         follow_cursor
       when 0..0x100
         c = key.chr
-        @buffer.insert @cursor, c
-        update_pango_layout_all
+        tmp = @cursor
         @cursor += 1
+        @buffer.insert tmp, c
       else
         p key.to_s(16)
       end
@@ -225,6 +224,10 @@ module MiW
         update_pango_layout_all
       end
       super
+    end
+
+    def update
+      update_pango_layout_all
     end
 
     private

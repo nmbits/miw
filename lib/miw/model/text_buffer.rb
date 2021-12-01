@@ -1,9 +1,11 @@
-
+require 'observer'
 require 'fiddle'
 
 module MiW
   module Model
     class TextBuffer
+      include Observable
+
       module UTF8
         MASK_1B = 0x80
         BITS_1B = 0x00
@@ -80,6 +82,8 @@ module MiW
           @linum_cache_linum = 0
         end
         @count_lines += eols
+        changed
+        notify_observers
         nil
       end
 
@@ -95,11 +99,15 @@ module MiW
           @linum_cache_cur = 0
           @linum_cache_linum = 0
         end
+        changed
+        notify_observers
         nil
       end
 
       def clear
         allocate_memory
+        changed
+        notify_observers
       end
 
       def [](arg0, len = nil)
