@@ -33,8 +33,7 @@ module MiW
 
     def model=(m)
       @model = m
-      update_knob
-      invalidate
+      update
     end
 
     def vertical?
@@ -47,8 +46,7 @@ module MiW
     end
 
     def frame_resized(w, h)
-      update_knob
-      invalidate
+      update
     end
 
     def draw(rect)
