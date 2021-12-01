@@ -1,6 +1,10 @@
+require 'observer'
+
 module MiW
   class ScrollBar
     class DefaultModel
+      include Observable
+
       def initialize(min: 0, max: 100, value: 0, proportion: 20, step: nil)
         @min = min
         @max = max
@@ -21,20 +25,23 @@ module MiW
         unless value <= max
           raise RangeError, "value should be less than or equal to max"
         end
-        @min, @max = min, max
-        self.value = value
+        if @min != min
+          @min = min
+          changed
+        end
+        if @max != max
+          @max = max
+          changed
+        end
+        if @value != value
+          @value = value
+          changed
+        end
+        notify_observers
       end
 
       def value=(value)
-        if @value != value
-          unless value >= @min
-            raise RangeError, "value should be greater than or equal to min"
-          end
-          unless value <= @max
-            raise RangeError, "value should be less than or equal to max"
-          end
-          @value = value
-        end
+        set_range @min, @max, value
       end
     end
   end

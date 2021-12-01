@@ -1,6 +1,10 @@
+require 'observer'
+
 module MiW
   class ScrollBar
     class ExtentBoundsModel
+      include Observable
+
       def initialize(target, orientation)
         @target = target
         @orientation = orientation

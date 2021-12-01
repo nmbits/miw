@@ -36,7 +36,7 @@ if __FILE__ == $0
       if x != view_point.x || y != view_point.y
         scroll_to x, y
       else
-        trigger :bounds_changed
+        notify :bounds_changed
       end
     end
 

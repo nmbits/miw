@@ -51,7 +51,9 @@ module MiW
 
     def remove_child(child)
       raise ArgumentError, "invalid id" if @scroll_bars.find{|k, v| child.id == v.id }
-      @target.remove_observer self if @target && child == @target
+      if @target && child == @target
+        set_target nil
+      end
       super
     end
 
@@ -65,8 +67,10 @@ module MiW
     end
 
     def update_scroll_bars
-      @scroll_bars[:vertical].update
-      @scroll_bars[:horizontal].update
+      [:vertical, :horizontal].each do |o|
+        @scroll_bars[o].model.changed
+        @scroll_bars[o].model.notify_observers
+      end
     end
 
     def receive(view, what, *args)

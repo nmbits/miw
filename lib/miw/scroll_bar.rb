@@ -32,7 +32,9 @@ module MiW
     attr_reader :orientaion, :thickness, :model
 
     def model=(m)
+      @model.delete_observer self if @model
       @model = m
+      @model.add_observer self
       update
     end
 
@@ -107,23 +109,19 @@ module MiW
         return unless width > 0
       end
       prev = @mouse_in
-      redraw = false
       case transit
       when :entered
         @mouse_in = true
       when :exited
         @mouse_in = false
       end
-      redraw = true if prev != @mouse_in
+      invalidate if prev != @mouse_in
       if dragging?
         px = vertical? ? my : mx
         px_delta = px - @drag_start_px
         val_delta = px_to_val px_delta
         @model.value = align_val @drag_start_val + val_delta
-        update_knob
-        redraw = true
       end
-      invalidate if redraw
     end
 
     def mouse_up(mx, my, button, *a)
