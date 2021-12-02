@@ -24,7 +24,7 @@ module MiW
       @invalid_rect = Rectangle.new(0, 0, width, height)
     end
 
-    attr_reader :cairo, :pango_layout
+    attr_reader :cairo, :pango_layout, :grabbing_view
     attr_accessor :focus
 
     def invalidate(x, y, width, height)
