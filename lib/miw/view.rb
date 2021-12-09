@@ -139,11 +139,18 @@ module MiW
     # tree
 
     def add_child(child, hints = {})
+      insert_child(@children.length, child, hints)
+    end
+
+    def insert_child(index, child, hints = {})
       if child.parent
         raise "The view is already a member of another view"
       end
+      if index > @children.size
+        raise RangeError, "index should be less than or equal to count of children"
+      end
       child.replace_layout_hints hints
-      @children << child
+      @children.insert index, child
       child.set_parent self
       do_layout if child.visible? && @window
     end
@@ -444,6 +451,10 @@ module MiW
         notify :bounds_changed
         invalidate
       end
+    end
+
+    def scroll_by(dx, dy)
+      scroll_to @view_point.x + dx, @view_point.y + dy
     end
 
     def notify(sym, *args)
