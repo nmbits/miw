@@ -51,7 +51,6 @@ module MiW
     def draw(x, y, width, height)
       r = Rectangle.new x, y, width, height
       cairo.save do
-        cairo.translate 0.5, 0.5
         cairo.line_width = 1.0
         draw_recursive @root, r
       end
@@ -116,6 +115,12 @@ module MiW
     def mouse_down(x, y, detail, state)
       view = @grabbing_view || @last_view
       if view
+        cview = view_at(x, y)
+        if cview != view
+          notify_mouse_moved cview, x, y, :entered, nil if cview
+          @last_button = 0
+          view = @last_view = cview
+        end
         click_count = 1
         now = Time.now
         if detail == @last_button
@@ -187,7 +192,11 @@ module MiW
       return unless view.visible?
       intr = view.bounds.intersect rect
       return unless intr.valid?
-      @cairo.save { view.draw intr }
+      @cairo.save do
+        cairo.rectangle *intr
+        cairo.clip
+        view.draw intr
+      end
       view.each_visible_child do |child|
         dx, dy = child.convert_to_parent 0, 0
         @cairo.save do
@@ -195,7 +204,11 @@ module MiW
           draw_recursive child, child.convert_from_parent(intr)
         end
       end
-      @cairo.save { view.draw_after_children intr }
+      @cairo.save do
+        cairo.rectangle *intr
+        cairo.clip
+        view.draw_after_children intr
+      end
     end
   end
 end
