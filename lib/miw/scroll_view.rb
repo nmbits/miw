@@ -30,8 +30,6 @@ module MiW
         else
           add_child view, hints
         end
-      end
-      if view
         model_h = ScrollBar::ExtentBoundsModel.new view, :horizontal
         model_v = ScrollBar::ExtentBoundsModel.new view, :vertical
       else
