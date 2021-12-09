@@ -9,25 +9,25 @@ module MiW
       MIN_SIZE_DEFAULT = [0, 0].freeze
       MAX_SIZE_DEFAULT = [Float::INFINITY, Float::INFINITY].freeze
 
-      def initialize(dir = 0, spacing = 0)
+      def initialize(dir = 0, spacing = 0, compact = false)
         @dir = dir
         @spacing = spacing
+        @compact = compact
       end
       attr_accessor :spacing
 
       def do_layout(container, rect)
-        Box.resize_items(container, rect, @dir, @spacing)
+        Box.resize_items(container, rect, @dir, @spacing, @compact)
         Box.move_items(container, rect, @dir, @spacing)
       end
 
-      def self.resize_items(container, rect, dir, spacing)
+      def self.resize_items(container, rect, dir, spacing, compact)
         odir = dir ^ 1
         size = [rect.width, rect.height]
         extent = size[dir]
 
-        count_resize_items = 0
-
         count_items = 0
+        count_resize_items = 0
         weight_total = 0
 
         tmp_size = [0, 0]
@@ -43,15 +43,13 @@ module MiW
           weight = hint[:weight] || WEIGHT_DEFAULT
           min_size = hint[:min_size] || MIN_SIZE_DEFAULT
 
-          if resize[dir]
+          if resize[dir] && !compact
             count_resize_items += 1
-          else
-            r = tmp_size[dir] - min_size[dir]
             weight_total += weight[dir]
-            if resize[odir]
-              tmp_size[odir] = size[odir]
-              item.resize_to *tmp_size
-            end
+          end
+          if resize[odir]
+            tmp_size[odir] = size[odir]
+            item.resize_to *tmp_size
           end
         end
         return if count_items == 0
@@ -96,7 +94,7 @@ module MiW
         end
 
         # pass 3:
-        if extent < 0
+        if !compact && extent < 0
           container.each do |item, hint|
             resize = hint[:resize] || RESIZE_DEFAULT
             next if resize[dir]
@@ -142,13 +140,25 @@ module MiW
 
     class HBox < Box
       def initialize(spacing = 0)
-        super 0, spacing
+        super 0, spacing, false
       end
     end
 
     class VBox < Box
       def initialize(spacing = 0)
-        super 1, spacing
+        super 1, spacing, false
+      end
+    end
+
+    class HPack < Box
+      def initialize(spacing = 0)
+        super 0, spacing, true
+      end
+    end
+
+    class VPack < Box
+      def initialize(spacing = 0)
+        super 1, spacing, true
       end
     end
   end # module Layout
