@@ -25,6 +25,7 @@ module MiW
     def pango_layout
       if cairo
         @pango_layout ||= cairo.create_pango_layout
+        @pango_layout.font_description = font
         @pango_layout.text = @string
         @pango_layout.width = width * Pango::SCALE
         @pango_layout.height = height * Pango::SCALE
