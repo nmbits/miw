@@ -72,8 +72,6 @@ if __FILE__ == $0
     def draw(rect)
       cairo.save do
         cairo.rectangle rect.x, rect.y, rect.width, rect.height
-        cairo.clip
-        cairo.rectangle rect.x, rect.y, rect.width, rect.height
         cairo.set_source_color MiW.colors[:control_background]
         cairo.fill
         limit_x = [bounds.right, EXTENT_SIZE].min
