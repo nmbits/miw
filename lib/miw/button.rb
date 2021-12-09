@@ -38,6 +38,7 @@ module MiW
       @active = false
       invalidate
       p :clicked
+      notify :clicked
     end
 
     def entered
