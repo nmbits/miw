@@ -113,7 +113,7 @@ module MiW
           @button1.hide
         end
       else
-        if bn[o] + bn[s] <= en[o] + en[s]
+        if bn[o] + bn[s] < en[o] + en[s] - @button_thickness
           @button1.show
         end
       end
